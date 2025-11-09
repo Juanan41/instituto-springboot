@@ -1,0 +1,76 @@
+### Información sobre el instituto con nombre Francisco de Quevedo
+GET http://localhost:3000/api/v1/institutos?nombre=Francisco de Quevedo
+
+### Información sobre el instituto con nombre Gomez Moreno
+GET http://localhost:3000/api/v1/institutos?nombre=Gomez Moreno
+
+### Te muestra los institutos existentes
+GET http://localhost:3000/api/v1/institutos
+
+### Actualiza el instituto
+PUT http://localhost:3000/api/v1/institutos/1
+Content-Type: application/json
+
+{
+  "nombre": "Instituto de Innovación Tecnológica",
+  "direccion": "Calle Nueva 22",
+  "telefono": "934567890",
+  "ciudad": "Barcelona",
+  "email": "info@Email.es"
+}
+
+###Actualizacion parcial el instituto
+PATCH http://localhost:3000/api/v1/institutos/1
+Content-Type: application/json
+
+{
+  "nombre": "Instituto de Innovación Tecnológica",
+  "direccion": "Calle Paloma"
+
+}
+
+###
+POST http://localhost:3000/api/v1/institutos
+Content-Type: application/json
+
+{
+  "nombre": "Instituto Internacional de Programadores",
+  "direccion": "Av. Siempre Viva 123",
+  "telefono": "555443322",
+  "email": "NomeDeJava@Email.es",
+  "tipo": "concertado",
+  "numeroEstudiantes": 2345,
+  "ciudad": "Cantabria",
+  "numeroProfesores": 65
+}
+
+###respuesta (HTTP 201 Created):
+POST http://localhost:3000/api/v1/institutos
+Content-Type: application/json
+
+{
+  "nombre": "Instituto Prueba",
+  "ciudad": "Sevilla",
+  "direccion": "Calle Inventada 10",
+  "telefono": "123-45-67-89",
+  "email": "test@mail.com",
+  "numeroEstudiantes": 300,
+  "numeroProfesores": 15,
+  "tipo": "publico",
+  "anioFundacion": "2000-05-15",
+  "codigoInstituto": "ABC-1234"
+}
+
+### devolverá un 400 Bad Request con los mensajes de validación de nombre y codigoInstituto.
+POST http://localhost:3000/api/v1/institutos
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "codigoInstituto": "1234-XYZ"
+}
+
+
+###Elimina el instituto
+DELETE http://localhost:3000/api/v1/institutos/1
+

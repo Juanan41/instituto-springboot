@@ -1,0 +1,82 @@
+package es.juanito.institutos.institutos.mappers;
+
+import es.juanito.institutos.institutos.dto.InstitutoCreateDto;
+import es.juanito.institutos.institutos.dto.InstitutoResponseDto;
+import es.juanito.institutos.institutos.dto.InstitutoUpdateDto;
+import es.juanito.institutos.institutos.models.Instituto;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@Component
+public class InstitutoMapper {
+    public Instituto toInstituto( Long id,InstitutoCreateDto institutoCreateDto ) {
+        return Instituto.builder()
+                .id(id)
+                .nombre(institutoCreateDto.getNombre())
+                .ciudad(institutoCreateDto.getCiudad())
+                .direccion(institutoCreateDto.getDireccion())
+                .telefono(institutoCreateDto.getTelefono())
+                .email(institutoCreateDto.getEmail())
+                .numeroEstudiantes(institutoCreateDto.getNumeroEstudiantes())
+                .numeroProfesores(institutoCreateDto.getNumeroProfesores())
+                .tipo(institutoCreateDto.getTipo())
+                .anioFundacion(institutoCreateDto.getAnioFundacion())
+                .codigoInstituto(institutoCreateDto.getCodigoInstituto())
+                .createdAt(LocalDateTime.now())
+                .updateAt(LocalDateTime.now())
+                .uuid(UUID.randomUUID())
+                .build();
+
+
+    }
+
+
+    public Instituto toInstituto(InstitutoUpdateDto institutoUpdateDto, Instituto instituto) {
+        return Instituto.builder()
+                .id(instituto.getId())
+                .nombre(institutoUpdateDto.getNombre() != null ? institutoUpdateDto.getNombre() : instituto.getNombre())
+                .ciudad(institutoUpdateDto.getCiudad() != null ? institutoUpdateDto.getCiudad() : instituto.getCiudad())
+                .direccion(institutoUpdateDto.getDireccion() != null ? institutoUpdateDto.getDireccion() : instituto.getDireccion())
+                .telefono(institutoUpdateDto.getTelefono() != null ? institutoUpdateDto.getTelefono() : instituto.getTelefono())
+                .email(institutoUpdateDto.getEmail() != null ? institutoUpdateDto.getEmail() : instituto.getEmail())
+                .numeroEstudiantes(institutoUpdateDto.getNumeroEstudiantes() != null ? institutoUpdateDto.getNumeroEstudiantes() : instituto.getNumeroEstudiantes())
+                .numeroProfesores(institutoUpdateDto.getNumeroProfesores() != null ? institutoUpdateDto.getNumeroProfesores() : instituto.getNumeroProfesores())
+                .tipo(institutoUpdateDto.getTipo() != null ? institutoUpdateDto.getTipo() : instituto.getTipo())
+                .anioFundacion(institutoUpdateDto.getAnioFundacion() != null ? institutoUpdateDto.getAnioFundacion() : instituto.getAnioFundacion())
+                .codigoInstituto(institutoUpdateDto.getCodigoInstituto() != null ? institutoUpdateDto.getCodigoInstituto() : instituto.getCodigoInstituto())
+                .createdAt(instituto.getCreatedAt())
+                .updateAt(LocalDateTime.now())
+                .uuid(instituto.getUuid())
+                .build();
+    }
+
+
+    public InstitutoResponseDto toinstitutoResponseDto(Instituto instituto) {
+        return InstitutoResponseDto.builder()
+                .id(instituto.getId())
+                .nombre(instituto.getNombre())
+                .ciudad(instituto.getCiudad())
+                .direccion(instituto.getDireccion())
+                .telefono(instituto.getTelefono())
+                .email(instituto.getEmail())
+                .numeroEstudiantes(instituto.getNumeroEstudiantes())
+                .numeroProfesores(instituto.getNumeroProfesores())
+                .tipo(instituto.getTipo())
+                .anioFundacion(instituto.getAnioFundacion())
+                .codigoInstituto(instituto.getCodigoInstituto())
+                .createdAt(instituto.getCreatedAt())  // usamos el valor del modelo
+                .updatedAt(instituto.getUpdateAt())   // usamos el valor del modelo
+                .uuid(instituto.getUuid())
+                .build();
+    }
+
+    // Mappeamos de modelo a DTO (lista)
+    public List<InstitutoResponseDto> toResponseDtoList(List<Instituto> institutos) {
+        return institutos.stream()
+                .map(this::toinstitutoResponseDto)
+                .toList();
+    }
+}
