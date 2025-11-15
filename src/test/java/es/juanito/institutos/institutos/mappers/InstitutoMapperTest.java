@@ -34,11 +34,10 @@ class InstitutoMapperTest {
                 .codigoInstituto("ABC-1234")
                 .build();
         // Act
-        var res = institutoMapper.toInstituto(id,institutoCreateDto);
+        var res = institutoMapper.toInstituto(institutoCreateDto);
 
         // Assert
         assertAll(
-                () -> assertEquals(id,res.getId()),
                 () -> assertEquals(institutoCreateDto.getNombre(),res.getNombre()),
                 () -> assertEquals(institutoCreateDto.getDireccion(),res.getDireccion()),
                 () -> assertEquals(institutoCreateDto.getCiudad(),res.getCiudad()),

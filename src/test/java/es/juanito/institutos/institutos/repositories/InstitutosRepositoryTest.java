@@ -3,6 +3,11 @@ package es.juanito.institutos.institutos.repositories;
 import es.juanito.institutos.institutos.models.Instituto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,10 +17,12 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class InstitutosRepositoryImplTest {
+// Reseteamos la base de datos para partir de una situación conocida
+@Sql(value = {"/reset.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@DataJpaTest
+class InstitutosRepositoryTest {
 
     private final Instituto instituto1 = Instituto.builder()
-            .id(1L)
             .nombre("Ramón María del Valle Inclan")
             .direccion("Calle Medidas")
             .ciudad("Madrid")
@@ -31,7 +38,6 @@ class InstitutosRepositoryImplTest {
             .build();
 
     private final Instituto instituto2 = Instituto.builder()
-            .id(2L)
             .nombre("Jesús y María")
             .direccion("García Noblejas")
             .ciudad("Madrid")
@@ -46,34 +52,35 @@ class InstitutosRepositoryImplTest {
             .uuid(UUID.fromString("8e7780f9-0771-4ff8-abdc-6e93f771f3c7"))
             .build();
 
-    private InstitutosRepositoryImpl repositorio;
+    @Autowired
+    private InstitutosRepository repositorio;
+    @Autowired
+    private TestEntityManager entityManager;
 
     @BeforeEach
     void setUp() {
-        repositorio = new InstitutosRepositoryImpl();
-        repositorio.save(instituto1);
-        repositorio.save(instituto2);
+        entityManager.merge(instituto1);
+        entityManager.merge(instituto2);
+        entityManager.flush();
     }
+
+
 
     @Test
     void findAll() {
-        // Act
         List<Instituto> institutos = repositorio.findAll();
 
-        // assert
         assertAll("findAll",
                 () -> assertNotNull(institutos),
                 () -> assertEquals(2, institutos.size())
-                );
+        );
     }
 
     @Test
     void findAllByCiudad() {
-        // Act
         String ciudad = "Madrid";
-        List<Instituto> institutos = repositorio.findAllByCiudad(ciudad);
+        List<Instituto> institutos = repositorio.findByCiudadContainsIgnoreCase(ciudad);
 
-        // Assert
         assertAll("findAllByCiudad",
                 () -> assertNotNull(institutos),
                 () -> assertEquals(2, institutos.size()),
@@ -83,11 +90,9 @@ class InstitutosRepositoryImplTest {
 
     @Test
     void findAllByNombre() {
-        // Act
         String nombre = "Ramón María del Valle Inclan";
-        List<Instituto> institutos = repositorio.findAllByNombre(nombre);
+        List<Instituto> institutos = repositorio.findByNombreContainsIgnoreCase(nombre);
 
-        // Assert
         assertAll("findAllByNombre",
                 () -> assertNotNull(institutos),
                 () -> assertEquals(1,institutos.size()),
@@ -97,25 +102,23 @@ class InstitutosRepositoryImplTest {
 
     @Test
     void findAllByCiudadAndNombre() {
-        // Act
         String ciudad = "Madrid";
         String nombre = "Jesús y María";
-        List<Instituto> institutos = repositorio.findAllByCiudadAndNombre(ciudad, nombre);
-        // Assert
-        assertAll(
+        List<Instituto> institutos = repositorio.findByCiudadAndNombreContainsIgnoreCase(ciudad, nombre);
+
+        assertAll("findAllByCiudadAndNombre",
                 () -> assertNotNull(institutos),
                 () -> assertEquals(1, institutos.size()),
-                () -> assertEquals(ciudad, institutos.getFirst().getCiudad())
+                () -> assertEquals(ciudad, institutos.get(1).getCiudad()),
+                () -> assertEquals(nombre, institutos.get(1).getNombre())
         );
     }
 
     @Test
     void findById_existingId_returnsOptionalWithInstituto() {
-        // Act
         Long id = 1L;
         Optional<Instituto> optionalInstituto = repositorio.findById(id);
 
-        // Assert
         assertAll("findById_existingId_returnsOptionalWithInstituto",
                 () -> assertNotNull(optionalInstituto),
                 () -> assertTrue(optionalInstituto.isPresent()),
@@ -125,25 +128,20 @@ class InstitutosRepositoryImplTest {
 
     @Test
     void findById_nonExistingId_returnsEmptyOptional() {
-        // Act
         Long id = 4L;
         Optional<Instituto> optionalInstituto = repositorio.findById(id);
 
-        //Assert
         assertAll("findById_nonExistingId_returnsEmptyOptional",
                 () -> assertNotNull(optionalInstituto),
                 () -> assertTrue(optionalInstituto.isEmpty())
         );
-
     }
 
     @Test
     void findByUuid_existingId_returnsOptionalWithInstituto() {
-        // Act
         UUID uuid = UUID.fromString("51af0a67-ff4b-42f3-8bc3-9db6531d4985");
         Optional<Instituto> optionalInstituto = repositorio.findByUuid(uuid);
 
-        // Assert
         assertAll("findByUuid_existingId_returnsOptionalWithInstituto",
                 () -> assertNotNull(optionalInstituto),
                 () -> assertTrue(optionalInstituto.isPresent()),
@@ -153,12 +151,9 @@ class InstitutosRepositoryImplTest {
 
     @Test
     void findByUuid_nonExistingId_returnsEmptyOptional() {
-        // Act
-        UUID uuid = UUID.randomUUID(); // un UUID que no está en el repositorio
+        UUID uuid = UUID.fromString("11111111-2222-3333-4444-555555555555");
         Optional<Instituto> optionalInstituto = repositorio.findByUuid(uuid);
 
-
-        // Assert
         assertAll("findByUuid_nonExistingId_returnsEmptyOptional",
                 () -> assertNotNull(optionalInstituto),
                 () -> assertTrue(optionalInstituto.isEmpty())
@@ -167,52 +162,34 @@ class InstitutosRepositoryImplTest {
 
     @Test
     void existsById_existingId_returnsTrue() {
-        // Act
         Long id = 1L;
         boolean exists = repositorio.existsById(id);
-
-        // Assert
         assertTrue(exists);
     }
 
     @Test
     void existsById_nonExistingId_returnsFalse() {
-        // Act
         Long id = 4L;
         boolean exists = repositorio.existsById(id);
-
-        // Assert
         assertFalse(exists);
     }
 
-
     @Test
     void existsByUuid_existingId_returnsTrue() {
-        // Act
         UUID uuid = UUID.fromString("51af0a67-ff4b-42f3-8bc3-9db6531d4985");
         boolean exists = repositorio.existsByUuid(uuid);
-
-        // Assert
-        assertAll("existsByUuid_existingId_returnsTrue",
-                () -> assertTrue(exists, "El instituto existe")
-        );
+        assertTrue(exists);
     }
 
-
     @Test
-
     void existsByUuid_nonExistingId_returnsFalse() {
-        // Act
         UUID uuid = UUID.fromString("11111111-2222-3333-4444-555555555555");
         boolean exists = repositorio.existsByUuid(uuid);
-
-        // Assert
         assertFalse(exists);
     }
 
     @Test
     void save_notExisting() {
-        // Arrange
         Instituto instituto = Instituto.builder()
                 .id(3L)
                 .nombre("Instituto Simancas")
@@ -226,11 +203,9 @@ class InstitutosRepositoryImplTest {
                 .anioFundacion(LocalDate.of(2025, 10, 31))
                 .build();
 
-        // Act
         Instituto savedInstituto = repositorio.save(instituto);
         var all = repositorio.findAll();
 
-        // Assert
         assertAll("save",
                 () -> assertNotNull(savedInstituto),
                 () -> assertEquals(instituto, savedInstituto),
@@ -240,60 +215,33 @@ class InstitutosRepositoryImplTest {
 
     @Test
     void save_butExisting() {
-        // Arrange
-        Instituto instituto = Instituto.builder().id(1L).build();
+        Instituto tarjetaExistente = instituto1;
 
-        // Act
-        Instituto savedInstituto = repositorio.save(instituto);
-        var all = repositorio.findAll();
-
-        //Assert
-        assertAll("save",
-                () -> assertNotNull(savedInstituto),
-                () -> assertEquals(instituto, savedInstituto),
-                () -> assertEquals(2, all.size())
-        );
+        assertThrows(DataIntegrityViolationException.class,
+                () -> repositorio.save(tarjetaExistente));
     }
 
     @Test
     void deleteById_existingId() {
-        // Act
         Long id = 1L;
         repositorio.deleteById(id);
         var all = repositorio.findAll();
 
-        // Assert
         assertAll("deleteById_existingId",
                 () -> assertEquals(1, all.size()),
                 () -> assertFalse(repositorio.existsById(id))
         );
-
     }
 
     @Test
     void deleteByUuid_existingId() {
-        // Act
         UUID uuid = UUID.fromString("51af0a67-ff4b-42f3-8bc3-9db6531d4985");
         repositorio.deleteByUuid(uuid);
         var all = repositorio.findAll();
 
-        // Assert
         assertAll("deleteByUuid_existingId",
                 () -> assertEquals(1, all.size()),
                 () -> assertFalse(repositorio.existsByUuid(uuid))
-        );
-    }
-
-    @Test
-    void nextId() {
-        // Act
-        Long nextId = repositorio.nextId();
-        var all = repositorio.findAll();
-
-        // Assert
-        assertAll("nextId",
-                ()-> assertEquals(3L,nextId),
-                () -> assertEquals(2, all.size())
         );
     }
 }

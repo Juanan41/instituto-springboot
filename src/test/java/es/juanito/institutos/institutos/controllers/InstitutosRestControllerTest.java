@@ -15,9 +15,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -76,8 +75,10 @@ class InstitutosRestControllerTest {
                 .hasStatusOk()
                 .bodyJson().satisfies(json -> {
                     assertThat(json).extractingPath("$.length()").isEqualTo(institutos.size());
-                    assertThat(json).extractingPath("$[0]").convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse1);
-                    assertThat(json).extractingPath("$[1]").convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse2);
+                    assertThat(json).extractingPath("$[0]")
+                            .convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse1);
+                    assertThat(json).extractingPath("$[1]")
+                            .convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse2);
                 });
 
         verify(institutosService, times(1)).findAll(null, null);

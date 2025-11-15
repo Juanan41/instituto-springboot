@@ -12,9 +12,9 @@ import java.util.UUID;
 
 @Component
 public class InstitutoMapper {
-    public Instituto toInstituto( Long id,InstitutoCreateDto institutoCreateDto ) {
+    public Instituto toInstituto(InstitutoCreateDto institutoCreateDto ) {
         return Instituto.builder()
-                .id(id)
+                .id(null)
                 .nombre(institutoCreateDto.getNombre())
                 .ciudad(institutoCreateDto.getCiudad())
                 .direccion(institutoCreateDto.getDireccion())

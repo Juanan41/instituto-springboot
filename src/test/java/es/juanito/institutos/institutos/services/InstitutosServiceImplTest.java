@@ -95,12 +95,12 @@ class InstitutosServiceImplTest {
         verify(institutosRepository, times(1)).findAll();
     }
     @Test
-    void findAll_ShouldReturnInstitutosByCiudad_WhenParameterProvided() {
+    void findAll_ShouldReturnInstitutosByCiudad_WhenParameterProvided()  {
         // Arrange
         String ciudad = "Madrid";
         List<Instituto> expectedInstituto = List.of(instituto1);
         List<InstitutoResponseDto> expectedInstitutoResponse = institutoMapper.toResponseDtoList(expectedInstituto);
-        when(institutosRepository.findAllByCiudad(ciudad)).thenReturn(expectedInstituto);
+        when(institutosRepository.findByCiudad(ciudad)).thenReturn(expectedInstituto);
 
         //Act
         List<InstitutoResponseDto> actualInstitutoResponse = institutosService.findAll(ciudad, null);
@@ -110,7 +110,7 @@ class InstitutosServiceImplTest {
 
         // Verify
         // Verifica que solo se ejecuta este método
-        verify(institutosRepository, only()).findAllByCiudad(ciudad);
+        verify(institutosRepository, only()).findByCiudad(ciudad);
     }
     @Test
     void findAll_ShouldReturnInstitutosByNombre_WhenParametersProvided() {
@@ -118,7 +118,7 @@ class InstitutosServiceImplTest {
         String nombre = "Ramón María del Valle Inclan";
         List<Instituto> expectedInstituto = List.of(instituto1);
         List<InstitutoResponseDto> expectedInstitutoResponse = institutoMapper.toResponseDtoList(expectedInstituto);
-        when(institutosRepository.findAllByNombre(nombre)).thenReturn(expectedInstituto);
+        when(institutosRepository.findByNombreContainsIgnoreCase(nombre)).thenReturn(expectedInstituto);
 
         // Act
         List<InstitutoResponseDto> actualInstitutoResponse = institutosService.findAll(null, nombre);
@@ -127,7 +127,7 @@ class InstitutosServiceImplTest {
         assertIterableEquals(expectedInstitutoResponse,actualInstitutoResponse);
 
         // Verify
-        verify(institutosRepository, only()).findAllByNombre(nombre);
+        verify(institutosRepository, only()).findByNombreContainsIgnoreCase(nombre);
     }
 
     @Test
@@ -137,7 +137,7 @@ class InstitutosServiceImplTest {
         String nombre = "Ramón María del Valle Inclan";
         List<Instituto> expectedInstituto = List.of(instituto1);
         List<InstitutoResponseDto> expectedInstitutoResponse = institutoMapper.toResponseDtoList(expectedInstituto);
-        when(institutosRepository.findAllByCiudadAndNombre(ciudad,nombre)).thenReturn(expectedInstituto);
+        when(institutosRepository.findByCiudadAndNombreContainsIgnoreCase(ciudad,nombre)).thenReturn(expectedInstituto);
 
         // Act
         List<InstitutoResponseDto> actualInstitutoResponse = institutosService.findAll(ciudad, nombre);
@@ -146,7 +146,7 @@ class InstitutosServiceImplTest {
         assertIterableEquals(expectedInstitutoResponse,actualInstitutoResponse);
 
         // Verify
-        verify(institutosRepository, only()).findAllByCiudadAndNombre(ciudad, nombre);
+        verify(institutosRepository, only()).findByCiudadAndNombreContainsIgnoreCase(ciudad, nombre);
     }
 
     @Test
@@ -236,19 +236,17 @@ class InstitutosServiceImplTest {
                 .updateAt(LocalDateTime.now())
                 .uuid(UUID.randomUUID())
                 .build();
-        InstitutoResponseDto expectedInstitutoResponse = institutoMapper.toinstitutoResponseDto(expectedInstituto);
+        InstitutoResponseDto expectedResponse = institutoMapper.toinstitutoResponseDto(expectedInstituto);
 
-        when(institutosRepository.nextId()).thenReturn(1L);
         when(institutosRepository.save(any(Instituto.class))).thenReturn(expectedInstituto);
 
         // Act
-        InstitutoResponseDto actualInstitutoResponse = institutosService.save(institutoCreateDto);
+        InstitutoResponseDto actualResponse = institutosService.save(institutoCreateDto);
 
         // Assert
-        assertEquals(expectedInstitutoResponse, actualInstitutoResponse);
+        assertEquals(expectedResponse, actualResponse);
 
         // Verify
-        verify(institutosRepository).nextId();
         verify(institutosRepository).save(institutoCaptor.capture());
 
         Instituto institutoCaptured = institutoCaptor.getValue();

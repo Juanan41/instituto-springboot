@@ -1,35 +1,40 @@
 package es.juanito.institutos.institutos.repositories;
 
-import es.juanito.institutos.institutos.dto.InstitutoResponseDto;
 import es.juanito.institutos.institutos.models.Instituto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface InstitutosRepository {
-    List<Instituto> findAll();
+@Repository
+public interface InstitutosRepository extends JpaRepository<Instituto, Long> {
 
-    List<Instituto> findAllByCiudad(String ciudad);
+    // Por ciudad
+    List<Instituto> findByCiudad(String ciudad);
+    List<Instituto> findByCiudadContainsIgnoreCase(String ciudad); // <-- FALTABA
+    List<Instituto> findByCiudadAndIsDeletedFalse(String ciudad);
 
-    List<Instituto> findAllByNombre(String nombre);
+    // Por nombre
+    List<Instituto> findByNombreContainsIgnoreCase(String nombre);
+    List<Instituto> findByNombreContainsIgnoreCaseAndIsDeletedFalse(String nombre);
 
-    List<Instituto> findAllByCiudadAndNombre(String ciudad, String nombre);
+    // Por ciudad y nombre
+    List<Instituto> findByCiudadAndNombreContainsIgnoreCase(String ciudad, String nombre);
+    List<Instituto> findByCiudadAndNombreContainsIgnoreCaseAndIsDeletedFalse(String ciudad, String nombre);
 
-    Optional<Instituto> findById(Long id);
-
+    // Por UUID
     Optional<Instituto> findByUuid(UUID uuid);
-
-    boolean existsById(Long id);
-
     boolean existsByUuid(UUID uuid);
-
-    Instituto save(Instituto instituto);
-
-    void deleteById(Long id);
-
     void deleteByUuid(UUID uuid);
 
-    Long nextId();
+    // Si está borrado
+    List<Instituto> findByIsDeleted(Boolean isDeleted);
 
+    @Modifying
+    @Query("UPDATE Instituto i SET i.isDeleted = true WHERE i.id = :id")
+    void updateIsDeletedToTrueById(Long id);
 }

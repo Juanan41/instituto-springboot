@@ -71,9 +71,10 @@ public class InstitutosRestController {
 
 
     @PostMapping
-    public ResponseEntity<InstitutoResponseDto> crearInstituto(@Valid @RequestBody InstitutoCreateDto dto) {
-        InstitutoResponseDto instituto = institutosService.save(dto); // Llama al método existente
-        return ResponseEntity.status(HttpStatus.CREATED).body(instituto);
+    public ResponseEntity<InstitutoResponseDto> crearInstituto(@Valid @RequestBody InstitutoCreateDto institutoCreateDto) {
+        log.info("Creando Instituto {}", institutoCreateDto);
+        var saved= institutosService.save(institutoCreateDto); // Llama al método existente
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     /**
@@ -130,34 +131,35 @@ public class InstitutosRestController {
      */
 
 
-    @ControllerAdvice
-    public class GlobalExceptionHandler {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        BindingResult result = ex.getBindingResult();
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
 
-        // Maneja errores de validación (400 Bad Request)
-        @ResponseStatus(HttpStatus.BAD_REQUEST)
-        @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ProblemDetail handleValidationExceptions(MethodArgumentNotValidException ex) {
-            BindingResult result = ex.getBindingResult();
-            ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-            problemDetail.setDetail("Falló la validación para el objeto='" + result.getObjectName()
-                    + "'. Núm. errores: " + result.getErrorCount());
+        problemDetail.setDetail("Falló la validación para el objeto='" + result.getObjectName()
+                + "'. Núm. errores: " + result.getErrorCount());
 
-            Map<String, String> errores = new HashMap<>();
-            for (FieldError error : result.getFieldErrors()) {
-                errores.put(error.getField(), error.getDefaultMessage());
-            }
-            problemDetail.setProperty("errores", errores);
-
-            return problemDetail;
+        Map<String, String> errores = new HashMap<>();
+        for (FieldError error : result.getFieldErrors()) {
+            errores.put(error.getField(), error.getDefaultMessage());
         }
+        problemDetail.setProperty("errores", errores);
 
-        // Maneja excepciones de instituto no encontrado (404 Not Found)
-        @ResponseStatus(HttpStatus.NOT_FOUND)
-        @ExceptionHandler(InstitutoNotFoundException.class)
-        public ProblemDetail handleInstitutoNotFoundException(InstitutoNotFoundException ex) {
-            ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
-            problemDetail.setDetail(ex.getMessage());
-            return problemDetail;
-        }
+        return problemDetail;
     }
+
+    // Maneja excepciones de instituto no encontrado (404 Not Found)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(InstitutoNotFoundException.class)
+    public ProblemDetail handleInstitutoNotFoundException(InstitutoNotFoundException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problemDetail.setDetail(ex.getMessage());
+        return problemDetail;
+    }
+
+
+
+
 }

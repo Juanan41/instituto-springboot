@@ -14,7 +14,7 @@ Content-Type: application/json
 {
   "nombre": "Instituto de Innovación Tecnológica",
   "direccion": "Calle Nueva 22",
-  "telefono": "934567890",
+  "telefono": "934-56-78-90",
   "ciudad": "Barcelona",
   "email": "info@Email.es"
 }
@@ -29,7 +29,8 @@ Content-Type: application/json
 
 }
 
-###
+### devolverá un 400 Bad Request con los mensajes de validación de telefono por que no sigue los estandares
+### debe tener 9 dígitos y  un guion separándolos,ejem:999-99-99-99" y el nombre debe tener entre 3 y 20 caracteres.
 POST http://localhost:3000/api/v1/institutos
 Content-Type: application/json
 
@@ -44,7 +45,7 @@ Content-Type: application/json
   "numeroProfesores": 65
 }
 
-###respuesta (HTTP 201 Created):
+###respuesta (HTTP 201 Created):crea un nuevo Instituto con un nuevo (Id)
 POST http://localhost:3000/api/v1/institutos
 Content-Type: application/json
 
@@ -61,7 +62,7 @@ Content-Type: application/json
   "codigoInstituto": "ABC-1234"
 }
 
-### devolverá un 400 Bad Request con los mensajes de validación de nombre y codigoInstituto.
+### devolverá un 400 Bad Request con los mensajes de validación de nombre y codigoInstituto, por estar vacio.
 POST http://localhost:3000/api/v1/institutos
 Content-Type: application/json
 
