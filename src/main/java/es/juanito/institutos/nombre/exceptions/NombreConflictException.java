@@ -1,7 +1,7 @@
-package es.juanito.institutos.nombre.models.exceptions;
+package es.juanito.institutos.nombre.exceptions;
 
 public class NombreConflictException extends RuntimeException {
-    public NombreConflictException(String message) {
-        super(message);
+    public NombreConflictException(String mensaje) {
+        super(mensaje);
     }
 }

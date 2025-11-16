@@ -7,6 +7,9 @@ GET http://localhost:3000/api/v1/institutos?nombre=Gomez Moreno
 ### Te muestra los institutos existentes
 GET http://localhost:3000/api/v1/institutos
 
+### GET con filtro por código de instituto
+GET http://localhost:3000/api/v1/nombres?codigoInstituto=ABC123
+
 ### Actualiza el instituto
 PUT http://localhost:3000/api/v1/institutos/1
 Content-Type: application/json
@@ -74,4 +77,44 @@ Content-Type: application/json
 
 ###Elimina el instituto
 DELETE http://localhost:3000/api/v1/institutos/1
+
+#ENDPOINTS DE NOMBRE
+
+
+### Obtiene todos los registros de nombres. Se puede filtrar opcionalmente por codigoInstituto.
+GET http://localhost:3000/api/v1/nombres
+
+
+### GET nombre por ID
+GET http://localhost:3000/api/v1/nombres/5
+
+### POST crear nuevo nombre
+POST http://localhost:3000/api/v1/nombres
+
+{
+  "codigoInstituto": "ABC123",
+  "isDeleted": false
+}
+
+### PUT actualizar nombre completo
+PUT http://localhost:3000/api/v1/nombres/5
+
+{
+  "codigoInstituto": "XYZ456",
+  "isDeleted": true
+}
+
+### PATCH actualización parcial
+PATCH http://localhost:3000/api/v1/nombres/5
+
+{
+  "isDeleted": true
+}
+
+### DELETE eliminar nombre
+DELETE http://localhost:3000/api/v1/nombres/5
+
+
+
+
 
