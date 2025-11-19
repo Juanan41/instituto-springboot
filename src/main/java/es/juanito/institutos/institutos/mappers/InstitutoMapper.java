@@ -1,5 +1,6 @@
 package es.juanito.institutos.institutos.mappers;
 
+import es.juanito.institutos.estudiante.models.Estudiante;
 import es.juanito.institutos.institutos.dto.InstitutoCreateDto;
 import es.juanito.institutos.institutos.dto.InstitutoResponseDto;
 import es.juanito.institutos.institutos.dto.InstitutoUpdateDto;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 @Component
 public class InstitutoMapper {
-    public Instituto toInstituto(InstitutoCreateDto institutoCreateDto ) {
+    public Instituto toInstituto(InstitutoCreateDto institutoCreateDto, Estudiante estudiante) {
         return Instituto.builder()
                 .id(null)
                 .nombre(institutoCreateDto.getNombre())
@@ -20,7 +21,7 @@ public class InstitutoMapper {
                 .direccion(institutoCreateDto.getDireccion())
                 .telefono(institutoCreateDto.getTelefono())
                 .email(institutoCreateDto.getEmail())
-                .numeroEstudiantes(institutoCreateDto.getNumeroEstudiantes())
+                .estudiantes(estudiantes)
                 .numeroProfesores(institutoCreateDto.getNumeroProfesores())
                 .tipo(institutoCreateDto.getTipo())
                 .anioFundacion(institutoCreateDto.getAnioFundacion())
@@ -42,7 +43,7 @@ public class InstitutoMapper {
                 .direccion(institutoUpdateDto.getDireccion() != null ? institutoUpdateDto.getDireccion() : instituto.getDireccion())
                 .telefono(institutoUpdateDto.getTelefono() != null ? institutoUpdateDto.getTelefono() : instituto.getTelefono())
                 .email(institutoUpdateDto.getEmail() != null ? institutoUpdateDto.getEmail() : instituto.getEmail())
-                .numeroEstudiantes(institutoUpdateDto.getNumeroEstudiantes() != null ? institutoUpdateDto.getNumeroEstudiantes() : instituto.getNumeroEstudiantes())
+                .estudiantes(instituto.getEstudiantes())
                 .numeroProfesores(institutoUpdateDto.getNumeroProfesores() != null ? institutoUpdateDto.getNumeroProfesores() : instituto.getNumeroProfesores())
                 .tipo(institutoUpdateDto.getTipo() != null ? institutoUpdateDto.getTipo() : instituto.getTipo())
                 .anioFundacion(institutoUpdateDto.getAnioFundacion() != null ? institutoUpdateDto.getAnioFundacion() : instituto.getAnioFundacion())
@@ -54,21 +55,24 @@ public class InstitutoMapper {
     }
 
 
-    public InstitutoResponseDto toinstitutoResponseDto(Instituto instituto) {
+    public InstitutoResponseDto toInstitutoResponseDto(Instituto instituto) {
         return InstitutoResponseDto.builder()
                 .id(instituto.getId())
                 .nombre(instituto.getNombre())
                 .ciudad(instituto.getCiudad())
                 .direccion(instituto.getDireccion())
                 .telefono(instituto.getTelefono())
-                .email(instituto.getEmail())
-                .numeroEstudiantes(instituto.getNumeroEstudiantes())
+                .estudiantes(
+                        instituto.getEstudiantes().stream()
+                                .map(Estudiante::getNombre)
+                                .toList()
+                )
                 .numeroProfesores(instituto.getNumeroProfesores())
                 .tipo(instituto.getTipo())
                 .anioFundacion(instituto.getAnioFundacion())
                 .codigoInstituto(instituto.getCodigoInstituto())
-                .createdAt(instituto.getCreatedAt())  // usamos el valor del modelo
-                .updatedAt(instituto.getUpdateAt())   // usamos el valor del modelo
+                .createdAt(instituto.getCreatedAt())
+                .updatedAt(instituto.getUpdateAt())
                 .uuid(instituto.getUuid())
                 .build();
     }
@@ -76,7 +80,7 @@ public class InstitutoMapper {
     // Mappeamos de modelo a DTO (lista)
     public List<InstitutoResponseDto> toResponseDtoList(List<Instituto> institutos) {
         return institutos.stream()
-                .map(this::toinstitutoResponseDto)
+                .map(this::toInstitutoResponseDto)
                 .toList();
     }
 }

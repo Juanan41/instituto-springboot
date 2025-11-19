@@ -1,54 +1,38 @@
-### Información sobre el instituto con nombre Francisco de Quevedo
-GET http://localhost:3000/api/v1/institutos?nombre=Francisco de Quevedo
+###################################################################
+#                    CRUD COMPLETO INSTITUTOS                     #
+#             Compatible con tu API /api/v1/institutos            #
+###################################################################
 
-### Información sobre el instituto con nombre Gomez Moreno
-GET http://localhost:3000/api/v1/institutos?nombre=Gomez Moreno
-
-### Te muestra los institutos existentes
+###########################################################
+### 1. GET – Obtener todos los institutos
+###########################################################
 GET http://localhost:3000/api/v1/institutos
 
-### GET con filtro por código de instituto
-GET http://localhost:3000/api/v1/nombres?codigoInstituto=ABC123
 
-### Actualiza el instituto
-PUT http://localhost:3000/api/v1/institutos/1
-Content-Type: application/json
+###########################################################
+### 2. GET – Buscar instituto por nombre
+### Devuelve una lista filtrada por nombre exacto
+###########################################################
+GET http://localhost:3000/api/v1/institutos?nombre=Francisco de Quevedo
 
-{
-  "nombre": "Instituto de Innovación Tecnológica",
-  "direccion": "Calle Nueva 22",
-  "telefono": "934-56-78-90",
-  "ciudad": "Barcelona",
-  "email": "info@Email.es"
-}
 
-###Actualizacion parcial el instituto
-PATCH http://localhost:3000/api/v1/institutos/1
-Content-Type: application/json
+###########################################################
+### 3. GET – Buscar instituto por códigoInstituto
+### Ejemplo: ABC-1234
+###########################################################
+GET http://localhost:3000/api/v1/institutos?codigoInstituto=ABC-1234
 
-{
-  "nombre": "Instituto de Innovación Tecnológica",
-  "direccion": "Calle Paloma"
 
-}
+###########################################################
+### 4. GET – Obtener instituto por ID
+###########################################################
+GET http://localhost:3000/api/v1/institutos/1
 
-### devolverá un 400 Bad Request con los mensajes de validación de telefono por que no sigue los estandares
-### debe tener 9 dígitos y  un guion separándolos,ejem:999-99-99-99" y el nombre debe tener entre 3 y 20 caracteres.
-POST http://localhost:3000/api/v1/institutos
-Content-Type: application/json
 
-{
-  "nombre": "Instituto Internacional de Programadores",
-  "direccion": "Av. Siempre Viva 123",
-  "telefono": "555443322",
-  "email": "NomeDeJava@Email.es",
-  "tipo": "concertado",
-  "numeroEstudiantes": 2345,
-  "ciudad": "Cantabria",
-  "numeroProfesores": 65
-}
-
-###respuesta (HTTP 201 Created):crea un nuevo Instituto con un nuevo (Id)
+###########################################################
+### 5. POST – Crear instituto correcto (HTTP 201 Created)
+### Este ejemplo cumple TODAS las validaciones
+###########################################################
 POST http://localhost:3000/api/v1/institutos
 Content-Type: application/json
 
@@ -58,62 +42,160 @@ Content-Type: application/json
   "direccion": "Calle Inventada 10",
   "telefono": "123-45-67-89",
   "email": "test@mail.com",
-  "numeroEstudiantes": 300,
+  "estudiantes": 300,
   "numeroProfesores": 15,
   "tipo": "publico",
   "anioFundacion": "2000-05-15",
   "codigoInstituto": "ABC-1234"
 }
 
-### devolverá un 400 Bad Request con los mensajes de validación de nombre y codigoInstituto, por estar vacio.
+
+###########################################################
+### 6. POST – Crear instituto con ERRORES (HTTP 400)
+### Este ejemplo provocará errores de validación:
+### - nombre vacío
+### - teléfono incorrecto
+### - email no válido
+### - códigoInstituto vacío
+### - estudiantes = 0 (no permitido)
+###########################################################
 POST http://localhost:3000/api/v1/institutos
 Content-Type: application/json
 
 {
   "nombre": "",
-  "codigoInstituto": "1234-XYZ"
+  "ciudad": "Madrid",
+  "direccion": "Calle Falsa 123",
+  "telefono": "555443322",
+  "email": "correo_invalido",
+  "estudiantes": 0,
+  "numeroProfesores": 0,
+  "tipo": "publico",
+  "anioFundacion": "2020-12-12",
+  "codigoInstituto": ""
 }
 
 
-###Elimina el instituto
+###########################################################
+### 7. PUT – Actualizar COMPLETAMENTE un instituto
+### Se deben enviar todos los campos o dará error 400
+###########################################################
+PUT http://localhost:3000/api/v1/institutos/1
+Content-Type: application/json
+
+{
+  "nombre": "Instituto Tecnológico",
+  "ciudad": "Barcelona",
+  "direccion": "Calle Innovación 22",
+  "telefono": "987-65-43-21",
+  "email": "nuevo@mail.com",
+  "estudiantes": 500,
+  "numeroProfesores": 40,
+  "tipo": "concertado",
+  "anioFundacion": "1999-05-15",
+  "codigoInstituto": "TEC-9988"
+}
+
+
+###########################################################
+### 8. PATCH – Actualización PARCIAL del instituto
+### Solo se envían los campos a actualizar
+###########################################################
+PATCH http://localhost:3000/api/v1/institutos/1
+Content-Type: application/json
+
+{
+  "direccion": "Calle Nueva 75",
+  "telefono": "111-22-33-44"
+}
+
+
+###########################################################
+### 9. DELETE – Eliminación lógica
+### Marca isDeleted = true
+###########################################################
 DELETE http://localhost:3000/api/v1/institutos/1
 
-#ENDPOINTS DE NOMBRE
 
+###################################################################
+#                      CRUD COMPLETO NOMBRES                      #
+#               Compatible con /api/v1/nombres                    #
+###################################################################
 
-### Obtiene todos los registros de nombres. Se puede filtrar opcionalmente por codigoInstituto.
+###########################################################
+### 1. GET – Obtener todos los registros
+###########################################################
 GET http://localhost:3000/api/v1/nombres
 
 
-### GET nombre por ID
+###########################################################
+### 2. GET – Buscar por codigoInstituto
+### Filtra por código exacto
+###########################################################
+GET http://localhost:3000/api/v1/nombres?codigoInstituto=ABC-1234
+
+
+###########################################################
+### 3. GET – Obtener nombre por ID
+###########################################################
 GET http://localhost:3000/api/v1/nombres/5
 
-### POST crear nuevo nombre
+
+###########################################################
+### 4. POST – Crear registro de nombre (correcto)
+### códigoInstituto es obligatorio y único
+###########################################################
 POST http://localhost:3000/api/v1/nombres
+Content-Type: application/json
 
 {
-  "codigoInstituto": "ABC123",
+  "codigoInstituto": "XYZ123",
   "isDeleted": false
 }
 
-### PUT actualizar nombre completo
+
+###########################################################
+### 5. POST – Errores de validación (HTTP 400)
+### códigoInstituto NO puede estar vacío
+###########################################################
+POST http://localhost:3000/api/v1/nombres
+Content-Type: application/json
+
+{
+  "codigoInstituto": ""
+}
+
+
+###########################################################
+### 6. PUT – Actualización COMPLETA de un nombre
+### Requiere TODOS los campos
+###########################################################
 PUT http://localhost:3000/api/v1/nombres/5
+Content-Type: application/json
 
 {
-  "codigoInstituto": "XYZ456",
-  "isDeleted": true
+  "codigoInstituto": "NUEVO555",
+  "isDeleted": false
 }
 
-### PATCH actualización parcial
+
+###########################################################
+### 7. PATCH – Actualización parcial
+### Solo se envían los campos modificados
+###########################################################
 PATCH http://localhost:3000/api/v1/nombres/5
+Content-Type: application/json
 
 {
   "isDeleted": true
 }
 
-### DELETE eliminar nombre
-DELETE http://localhost:3000/api/v1/nombres/5
 
+###########################################################
+### 8. DELETE – Eliminación del registro
+### Aquí es eliminación física (delete real)
+###########################################################
+DELETE http://localhost:3000/api/v1/nombres/5
 
 
 

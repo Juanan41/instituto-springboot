@@ -1,9 +1,9 @@
-package es.juanito.institutos.nombre.controllers;
+package es.juanito.institutos.estudiante.controllers;
 
-import es.juanito.institutos.nombre.dto.NombreRequestDto;
-import es.juanito.institutos.nombre.exceptions.NombreException;
-import es.juanito.institutos.nombre.models.Nombre;
-import es.juanito.institutos.nombre.services.NombreService;
+import es.juanito.institutos.estudiante.dto.EstudianteRequestDto;
+import es.juanito.institutos.estudiante.exceptions.EstudianteException;
+import es.juanito.institutos.estudiante.models.Estudiante;
+import es.juanito.institutos.estudiante.services.EstudianteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,45 +22,45 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("api/${api.version}/nombres")
-public class NombreRestController {
+@RequestMapping("api/${api.version}/estudiante")
+public class EstudianteRestController {
 
-    private final NombreService nombreService;
+    private final EstudianteService estudianteService;
 
-    // --- GET all nombres ---
+    // --- GET all estudiante ---
     @GetMapping
-    public ResponseEntity<List<Nombre>> getAll(@RequestParam(required = false) String codigoInstituto) {
-        log.info("Buscando todos los nombres con codigoInstituto: {}", codigoInstituto);
-        return ResponseEntity.ok(nombreService.findAll(codigoInstituto));
+    public ResponseEntity<List<Estudiante>> getAll(@RequestParam(required = false) String codigoInstituto) {
+        log.info("Buscando todos los estudiantes con codigoInstituto: {}", codigoInstituto);
+        return ResponseEntity.ok(estudianteService.findAll(codigoInstituto));
     }
 
     // --- GET by id ---
     @GetMapping("/{id}")
-    public ResponseEntity<Nombre> getById(@PathVariable Long id) {
+    public ResponseEntity<Estudiante> getById(@PathVariable Long id) {
         log.info("Buscando nombre por id={}", id);
-        return ResponseEntity.ok(nombreService.findById(id));
+        return ResponseEntity.ok(estudianteService.findById(id));
     }
 
     // --- POST create ---
     @PostMapping
-    public ResponseEntity<Nombre> create(@Valid @RequestBody NombreRequestDto nombreRequestDto) {
-        log.info("Creando nombre: {}", nombreRequestDto);
-        Nombre saved = nombreService.save(nombreRequestDto);
+    public ResponseEntity<Estudiante> create(@Valid @RequestBody EstudianteRequestDto estudianteRequestDto) {
+        log.info("Creando estudiante: {}", estudianteRequestDto);
+        Estudiante saved = estudianteService.save(estudianteRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     // --- PUT update ---
     @PutMapping("/{id}")
-    public ResponseEntity<Nombre> update(@PathVariable Long id, @Valid @RequestBody NombreRequestDto nombreRequestDto) {
-        log.info("Actualizando nombre id={} con datos={}", id, nombreRequestDto);
-        return ResponseEntity.ok(nombreService.update(id, nombreRequestDto));
+    public ResponseEntity<Estudiante> update(@PathVariable Long id, @Valid @RequestBody EstudianteRequestDto estudianteRequestDto) {
+        log.info("Actualizando estudiante id={} con datos={}", id, estudianteRequestDto);
+        return ResponseEntity.ok(estudianteService.update(id, estudianteRequestDto));
     }
 
     // --- DELETE ---
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        log.info("Borrando nombre por id: {}", id);
-        nombreService.deleteById(id);
+        log.info("Borrando estudiante por id: {}", id);
+        estudianteService.deleteById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -85,8 +85,8 @@ public class NombreRestController {
     }
 
     // --- Manejo de excepciones de negocio ---
-    @ExceptionHandler(NombreException.class)
-    public ResponseEntity<ProblemDetail> handleNombreException(NombreException ex) {
+    @ExceptionHandler(EstudianteException.class)
+    public ResponseEntity<ProblemDetail> handleEstudianteException(EstudianteException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         problemDetail.setDetail(ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);

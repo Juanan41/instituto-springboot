@@ -1,5 +1,7 @@
 package es.juanito.institutos.institutos.services;
 
+import es.juanito.institutos.estudiante.models.Estudiante;
+import es.juanito.institutos.estudiante.services.EstudianteService;
 import es.juanito.institutos.institutos.dto.InstitutoCreateDto;
 import es.juanito.institutos.institutos.dto.InstitutoResponseDto;
 import es.juanito.institutos.institutos.dto.InstitutoUpdateDto;
@@ -16,8 +18,12 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Servicio que implementa la lógica de negocio para Institutos.
@@ -30,7 +36,7 @@ import java.util.UUID;
 public class InstitutosServiceImpl implements InstitutosService {
     private final InstitutosRepository institutosRepository;
     private final InstitutoMapper institutoMapper;
-
+    private final EstudianteService estudianteService;
 
     /**
      * Busca institutos aplicando filtros opcionales de ciudad y nombre.
@@ -73,7 +79,7 @@ public class InstitutosServiceImpl implements InstitutosService {
         log.info("Buscando instituto por id {}", id);
 
         // Estilo funcional: devuelve el DTO o lanza excepción si no existe o está borrado
-        return institutoMapper.toinstitutoResponseDto(
+        return institutoMapper.toInstitutoResponseDto(
                 institutosRepository.findById(id)
                         .orElseThrow(() -> new InstitutoNotFoundException(id)));
     }
@@ -88,7 +94,7 @@ public class InstitutosServiceImpl implements InstitutosService {
         log.info("Buscando instituto por uuid: {}", uuid);
         try {
             UUID myUUID = UUID.fromString(uuid);
-            return institutoMapper.toinstitutoResponseDto(
+            return institutoMapper.toInstitutoResponseDto(
                     institutosRepository.findByUuid(myUUID)
                             .orElseThrow(() -> new InstitutoNotFoundException(myUUID)));
         } catch (IllegalArgumentException e) {
@@ -105,12 +111,32 @@ public class InstitutosServiceImpl implements InstitutosService {
     public InstitutoResponseDto save(InstitutoCreateDto institutoCreateDto) {
         log.info("Guardando instituto: {}", institutoCreateDto);
 
-        // Creamos la entidad desde el DTO
-        Instituto nuevoInstituto = institutoMapper.toInstituto(institutoCreateDto);
 
-        // Guardamos en la base de datos y devolvemos el DTO
-        return institutoMapper.toinstitutoResponseDto(institutosRepository.save(nuevoInstituto));
+// Generamos estudiantes aleatorios
+        List<Estudiante> estudiantesAleatorios = generarEstudiantesAleatorios(5);
+
+// Creamos la entidad Instituto usando builder
+        Instituto nuevoInstituto = Instituto.builder()
+                .nombre(institutoCreateDto.getNombre())
+                .ciudad(institutoCreateDto.getCiudad())
+                .direccion(institutoCreateDto.getDireccion())
+                .telefono(institutoCreateDto.getTelefono())
+                .email(institutoCreateDto.getEmail())
+                .estudiantes(estudiantesAleatorios)
+                .numeroProfesores(institutoCreateDto.getNumeroProfesores())
+                .tipo(institutoCreateDto.getTipo())
+                .anioFundacion(institutoCreateDto.getAnioFundacion())
+                .codigoInstituto(institutoCreateDto.getCodigoInstituto())
+                .createdAt(LocalDateTime.now())
+                .updateAt(LocalDateTime.now())
+                .uuid(UUID.randomUUID())
+                .build();
+
+// Guardamos en la base de datos y devolvemos el DTO
+        return institutoMapper.toInstitutoResponseDto(institutosRepository.save(nuevoInstituto));
+
     }
+
 
     /**
      * Actualiza un instituto existente.
@@ -118,6 +144,7 @@ public class InstitutosServiceImpl implements InstitutosService {
      */
     @Override
     @CachePut(key = "#result.id")
+
     public InstitutoResponseDto update(Long id, InstitutoUpdateDto institutoUpdateDto) {
         log.info("Actualizando instituto por id: {}", id);
 
@@ -128,7 +155,7 @@ public class InstitutosServiceImpl implements InstitutosService {
         Instituto institutoActualizado = institutoMapper.toInstituto(institutoUpdateDto, institutoActual);
 
         // Guardamos cambios y devolvemos DTO
-        return institutoMapper.toinstitutoResponseDto(institutosRepository.save(institutoActualizado));
+        return institutoMapper.toInstitutoResponseDto(institutosRepository.save(institutoActualizado));
     }
 
     /**
@@ -147,6 +174,20 @@ public class InstitutosServiceImpl implements InstitutosService {
         //institutosRepository.updateIsDeletedToTrueById(id);
 
     }
+    private List generarEstudiantesAleatorios(int n) {
+        Random random = new Random();
+
+        return IntStream.range(0, n)
+                .mapToObj(i -> Estudiante.builder()
+                        .id(null) // se asigna al guardar en DB
+                        .nombre("Estudiante_" + UUID.randomUUID().toString().substring(0, 5))
+                        .codigoInstituto("C-" + random.nextInt(1000))
+                        .isDeleted(false)
+                        .build())
+                .collect(Collectors.toList());
+
+    }
+
 
 
 }

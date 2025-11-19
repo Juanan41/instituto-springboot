@@ -24,7 +24,8 @@ public class InstitutoCreateDto {
     private final String telefono;
     @Email(message = "El correo no tiene un formato válido")
     private final String email;
-    private final Integer numeroEstudiantes;
+    private final Long estudianteId;
+
     private final Integer numeroProfesores;
     private final String tipo;
     private final LocalDate anioFundacion;

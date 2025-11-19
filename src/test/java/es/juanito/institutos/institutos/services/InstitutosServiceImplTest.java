@@ -263,7 +263,7 @@ class InstitutosServiceImplTest {
         when(institutosRepository.findById(id)).thenReturn(Optional.of(instituto1));
 
         InstitutoUpdateDto institutoUpdateDto = InstitutoUpdateDto.builder()
-                .numeroEstudiantes(numeroEstudiantes)
+                .Estudiantes(numeroEstudiantes)
                 .build();
         Instituto institutoUpdate = institutoMapper.toInstituto(institutoUpdateDto, instituto1);
         when(institutosRepository.save(any(Instituto.class))).thenReturn(instituto1);
@@ -291,7 +291,7 @@ class InstitutosServiceImplTest {
         // Arrange
         Long id = 1L;
         InstitutoUpdateDto institutoUpdateDto = InstitutoUpdateDto.builder()
-                .numeroEstudiantes(1450)
+                .Estudiantes(1450)
                 .build();
         when(institutosRepository.findById(id)).thenReturn(Optional.empty());
 

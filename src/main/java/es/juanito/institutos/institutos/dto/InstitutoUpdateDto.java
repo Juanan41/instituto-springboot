@@ -1,5 +1,6 @@
 package es.juanito.institutos.institutos.dto;
 
+import es.juanito.institutos.estudiante.models.Estudiante;
 import es.juanito.institutos.institutos.validators.InstitutoCode;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -23,7 +24,9 @@ public class InstitutoUpdateDto {
     private final String telefono;
     @Email(message = "El correo no tiene un formato válido")
     private final String email;
-    private final Integer numeroEstudiantes;
+    private final Long estudianteId;
+
+
     private final Integer numeroProfesores;
     private final String tipo;
     private final LocalDate anioFundacion;
