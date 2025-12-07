@@ -1,0 +1,114 @@
+### CRUD COMPLETO: INSTITUTOS
+
+# Nota: Los IDs 1 y 2 existen al iniciar la aplicación (INST001, INST002).
+
+# -----------------------------------------------------------
+# 1. GET – Obtener todos los institutos
+# -----------------------------------------------------------
+GET http://localhost:3000/api/v1/institutos
+
+###
+
+# -----------------------------------------------------------
+# 2. GET – Buscar instituto por nombre
+# Busca por nombre del Instituto Central
+# -----------------------------------------------------------
+GET http://localhost:3000/api/v1/institutos?nombre=Instituto Central
+
+###
+
+# -----------------------------------------------------------
+# 3. GET – Buscar instituto por códigoInstituto
+# -----------------------------------------------------------
+GET http://localhost:3000/api/v1/institutos?codigoInstituto=INST001
+
+###
+
+# -----------------------------------------------------------
+# 4. GET – Obtener instituto por ID
+# ID 1 corresponde a Instituto Central
+# -----------------------------------------------------------
+GET http://localhost:3000/api/v1/institutos/1
+
+###
+
+# -----------------------------------------------------------
+# 5. POST – Crear instituto correcto (HTTP 201 Created)
+# El codigoInstituto debe ser único y no estar en el data.sql
+# -----------------------------------------------------------
+POST http://localhost:3000/api/v1/institutos
+Content-Type: application/json
+
+{
+  "nombre": "Instituto Prueba Creación",
+  "ciudad": "Sevilla",
+  "direccion": "Calle Inventada 10",
+  "telefono": "123-45-67-89",
+  "email": "test.new@mail.com",
+  "numeroProfesores": 15,
+  "tipo": "Público",
+  "anioFundacion": "2000-05-15",
+  "codigoInstituto": "NUE-0033"
+}
+
+###
+
+# -----------------------------------------------------------
+# 6. POST – Crear instituto con ERRORES (HTTP 400 Bad Request)
+# Falla por nombre vacío y códigoInstituto vacío
+# -----------------------------------------------------------
+POST http://localhost:3000/api/v1/institutos
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "ciudad": "Madrid",
+  "direccion": "Calle Falsa 123",
+  "telefono": "555443322",
+  "email": "correo_invalido@ejemplo.com",
+  "numeroProfesores": 0,
+  "tipo": "publico",
+  "anioFundacion": "2020-12-12",
+  "codigoInstituto": ""
+}
+
+###
+
+# -----------------------------------------------------------
+# 7. PUT – Actualizar COMPLETAMENTE el instituto (ID 1)
+# -----------------------------------------------------------
+PUT http://localhost:3000/api/v1/institutos/1
+Content-Type: application/json
+
+{
+  "nombre": "Instituto Central Actualizado",
+  "ciudad": "Barcelona",
+  "direccion": "Calle Central 100",
+  "telefono": "987-65-43-21",
+  "email": "central.actualizado@example.com",
+  "numeroProfesores": 40,
+  "tipo": "Concertado",
+  "anioFundacion": "1990-01-01",
+  "codigoInstituto": "INT-0011"
+}
+
+###
+
+# -----------------------------------------------------------
+# 8. PATCH – Actualización PARCIAL del instituto (ID 2)
+# Solo cambiamos la dirección y el teléfono
+# -----------------------------------------------------------
+PATCH http://localhost:3000/api/v1/institutos/2
+Content-Type: application/json
+
+{
+  "direccion": "Calle Nueva 75 (Parcial)",
+  "telefono": "111-22-33-44"
+}
+
+###
+
+# -----------------------------------------------------------
+# 9. DELETE – Eliminación LÓGICA (ID 2)
+# -----------------------------------------------------------
+DELETE http://localhost:3000/api/v1/institutos/2

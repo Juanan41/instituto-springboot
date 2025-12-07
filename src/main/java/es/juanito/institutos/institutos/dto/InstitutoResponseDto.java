@@ -20,6 +20,7 @@ public class InstitutoResponseDto {
     private String ciudad;
     private String direccion;
     private String telefono;
+    private String email;
     private Integer numeroProfesores;
     private String tipo;
     private LocalDate anioFundacion;
@@ -27,6 +28,7 @@ public class InstitutoResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UUID uuid;
+    private Boolean isDeleted;
 
 
     // Lista de nombres de estudiantes

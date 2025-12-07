@@ -1,6 +1,11 @@
-package es.juanito.institutos.estudiante.exceptions;
+package es.juanito.institutos.estudiantes.exceptions;
 
-public class EstudianteConflictException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+// Mapea a 409 Conflict
+@ResponseStatus(HttpStatus.CONFLICT)
+public class EstudianteConflictException extends EstudianteException {
     public EstudianteConflictException(String mensaje) {
         super(mensaje);
     }

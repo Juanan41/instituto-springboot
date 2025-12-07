@@ -1,160 +1,115 @@
 package es.juanito.institutos.institutos.models;
 
-import es.juanito.institutos.estudiante.models.Estudiante;
+import es.juanito.institutos.estudiantes.models.Estudiante;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.CascadeType;
-
-
-import java.time.LocalDate;
+import java.time.LocalDate; // Necesario para anioFundacion
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Builder
-@ToString
 @Getter
 @Setter
+@ToString(exclude = {"estudiantes"}) // Excluir la lista de estudiantes para evitar un bucle
 @AllArgsConstructor
-@NoArgsConstructor   // JPA necesita constructor vacío
+@NoArgsConstructor // Requerido por JPA
 @Entity
 @Table(name = "INSTITUTOS")
 public class Instituto {
 
     // ----------------------------------------------------------------------
-    // ID AUTOINCREMENTAL
+    // 🔑 Clave Primaria y Metadatos
     // ----------------------------------------------------------------------
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ----------------------------------------------------------------------
-    // NOMBRE DEL INSTITUTO: obligatorio, entre 3 y 20 caracteres
-    // ----------------------------------------------------------------------
-    @Column(nullable = false, length = 100)
-    @NotBlank(message = "El nombre es obligatorio")
-    @Size(min = 3, max = 50, message = "El nombre debe tener entre 3 y 50 caracteres")
-    private String nombre;
-
-    // ----------------------------------------------------------------------
-    // CIUDAD
-    // ----------------------------------------------------------------------
-    @Column(nullable = false, length = 100)
-    @NotBlank(message = "La ciudad es obligatoria")
-    private String ciudad;
-
-    // ----------------------------------------------------------------------
-    // DIRECCIÓN COMPLETA
-    // ----------------------------------------------------------------------
-    @Column(nullable = false, length = 100)
-    @NotBlank(message = "La dirección es obligatoria")
-    private String direccion;
-
-    // ----------------------------------------------------------------------
-    // TELÉFONO: debe tener el formato 999-99-99-99
-    // ----------------------------------------------------------------------
-    @Column(nullable = false, length = 20)
-    @Pattern(regexp = "\\d{3}-\\d{2}-\\d{2}-\\d{2}",
-            message = "El teléfono debe tener el formato 999-99-99-99")
-    private String telefono;
-
-    // ----------------------------------------------------------------------
-    // EMAIL INSTITUCIONAL
-    // ----------------------------------------------------------------------
-    @Column(nullable = false, length = 100)
-    @Email(message = "Debe ser un email válido")
-    @NotEmpty(message = "El email es obligatorio")
-    private String email;
-
-    // ----------------------------------------------------------------------
-    // TOTAL ESTUDIANTES
-    // ----------------------------------------------------------------------
-    @Column(nullable = false)
-    @NotNull(message = "El número de estudiantes es obligatorio")
-    @Min(value = 1, message = "Debe tener al menos 1 estudiante")
-    private Integer estudiantes;
-
-    // ----------------------------------------------------------------------
-    // TOTAL PROFESORES
-    // ----------------------------------------------------------------------
-    @Column(nullable = false)
-    @NotNull(message = "El número de profesores es obligatorio")
-    @Min(value = 1, message = "Debe tener al menos 1 profesor")
-    private Integer numeroProfesores;
-
-    // ----------------------------------------------------------------------
-    // TIPO: público, privado o concertado
-    // ----------------------------------------------------------------------
-    @Column(nullable = false, length = 50)
-    @NotBlank(message = "El tipo es obligatorio")
-    private String tipo;
-
-    // ----------------------------------------------------------------------
-    // AÑO DE FUNDACIÓN
-    // ----------------------------------------------------------------------
-    @Column(nullable = false)
-    @NotNull(message = "El año de fundación es obligatorio")
-    private LocalDate anioFundacion;
-
-    // ----------------------------------------------------------------------
-    // CÓDIGO ÚNICO DEL INSTITUTO: requerido por tus endpoints
-    // ----------------------------------------------------------------------
-    @Column(nullable = false, length = 50, unique = true)
-    @NotBlank(message = "El código del instituto es obligatorio")
-    private String codigoInstituto;
-
-    // ----------------------------------------------------------------------
-    // FECHA DE CREACIÓN - automática
-    // ----------------------------------------------------------------------
-    @Builder.Default
-    @Column(updatable = false, nullable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    // ----------------------------------------------------------------------
-    // FECHA DE ACTUALIZACIÓN - automática
-    // ----------------------------------------------------------------------
-    @Column(nullable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    private LocalDateTime updateAt = LocalDateTime.now();
-
-    // ----------------------------------------------------------------------
-    // UUID ÚNICO NO MODIFICABLE
-    // ----------------------------------------------------------------------
-    @Column(unique = true, updatable = false, nullable = false)
+    @Column(unique = true, updatable = false, nullable = false, columnDefinition = "BINARY(16)")
     @Builder.Default
     private UUID uuid = UUID.randomUUID();
 
     // ----------------------------------------------------------------------
-    // BORRADO LÓGICO
+    // 🏫 Datos de Negocio
     // ----------------------------------------------------------------------
+
+    @Column(nullable = false, unique = true, length = 10)
+    private String codigoInstituto; // Identificador único de negocio
+
+    @Column(nullable = false, length = 100)
+    private String nombre;
+
+    // --- CAMPOS AÑADIDOS PARA COMPATIBILIDAD CON MAPPER Y TESTS ---
+
+    @Column(nullable = false, length = 150)
+    private String direccion;
+
+    @Column(nullable = false, length = 50)
+    private String ciudad;
+
+    @Column(length = 15)
+    private String telefono;
+
+    @Column(nullable = false, length = 100, unique = true)
+    private String email;
+
+    @Column
+    private Integer numeroProfesores;
+
+    @Column(length = 20)
+    private String tipo; // Ej: público, privado, concertado
+
+    @Column
+    private LocalDate anioFundacion; // Usamos LocalDate
+
+    // ----------------------------------------------------------------------
+    // 👥 Relación: Un Instituto a Muchos Estudiantes
+    // ----------------------------------------------------------------------
+
+    // En es.juanito.institutos.institutos.models.Instituto.java
+
+    // En Instituto.java (La entidad que contiene la colección)
+
+    @OneToMany(mappedBy = "instituto",
+            fetch = FetchType.LAZY, //  CRÍTICO: Cambiar a LAZY
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    @Builder.Default
+    private Set<Estudiante> estudiantes = new HashSet<>();
+
+    // ----------------------------------------------------------------------
+    // 🕒 Metadatos de Auditoría y Borrado Lógico
+    // ----------------------------------------------------------------------
+
+    @CreationTimestamp
+    @Column(updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
     @Column(columnDefinition = "boolean default false")
     @Builder.Default
     private Boolean isDeleted = false;
 
-    // Relación con instituto, muchas estudiantes pueden tener un instituto
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "instituto_id") // FK en Estudiante
-    @Builder.Default
-    private List<Estudiante> estudiante = new ArrayList<>();
+    // ----------------------------------------------------------------------
+    // Constructor de Conveniencia (Ajustado a los nuevos campos clave)
+    // ----------------------------------------------------------------------
 
-
-
-    //@OneToMany(mappedBy = "instituto", cascade = CascadeType.ALL, orphanRemoval = true)
-    //private List<Estudiante> estudiante = new ArrayList<>();
-    // @OneToMany → indica que un Instituto puede tener muchos estudiantes.
-    //
-    //mappedBy = "instituto" → le dice a JPA que la relación está controlada por el atributo instituto de la clase Estudiante (no se crea una tabla extra).
-    //
-    //cascade = CascadeType.ALL → operaciones como guardar o borrar se propagan a los estudiantes automáticamente.
-    //
-    //orphanRemoval = true → si quitas un estudiante de la lista, se borra de la base de datos.
-    //
-    //new ArrayList<>() → siempre inicializamos la lista para que nunca sea null.
-
+    /**
+     * Constructor para la creación de la entidad desde un DTO con datos clave.
+     * Los demás campos se establecen con valores por defecto o son nulos.
+     * NOTA: Este constructor ya no coincide con el Builder de la entidad. Se recomienda usar el AllArgsConstructor y el Builder de Lombok.
+     */
+    /*
+    public Instituto(String codigoInstituto, String nombre) {
+        this.codigoInstituto = codigoInstituto;
+        this.nombre = nombre;
+    }
+    */
 }

@@ -9,7 +9,7 @@ import java.util.UUID;
  * Excepción de tarjeta no encontrada
  * Status 404
  */
-
+@ResponseStatus(HttpStatus.NOT_FOUND)
 public class InstitutoNotFoundException extends InstitutoException {
 
     public InstitutoNotFoundException(Long id) {

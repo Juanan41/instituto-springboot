@@ -1,13 +1,11 @@
-package es.juanito.institutos.estudiante.models;
+package es.juanito.institutos.estudiantes.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import es.juanito.institutos.institutos.models.Instituto;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
-
+import java.time.LocalDate; // Importar LocalDate para la fecha de nacimiento
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.UUID;
 
 @Builder
 @ToString
@@ -16,61 +14,55 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name ="ESTUDIANTES")
+@Table(name = "ESTUDIANTES")
 public class Estudiante {
 
-    // ----------------------------------------------------------------------
-    // ID AUTOINCREMENTAL
-    // ----------------------------------------------------------------------
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // ----------------------------------------------------------------------
-    // CÓDIGO DEL INSTITUTO VINCULADO
-    // Debe ser único y no puede estar vacío
+    // 👤 CAMPOS DE DATOS PERSONALES (Añadidos para resolver los errores de 'get')
     // ----------------------------------------------------------------------
-    @Column(unique = true, nullable = false, length = 20)
-    @NotBlank(message = "El código del instituto es obligatorio")
-    private String codigoInstituto;
-    @Column(unique = true, nullable = false,  length = 20)
-    private String nombre;
+
+    @Column(nullable = false, length = 100)
+    private String nombre; // Campo existente
+
+    @Column(nullable = false, length = 100)
+    private String apellidos; // <-- Añadido
+
+    @Column(nullable = false, length = 100, unique = true)
+    private String email; // <-- Añadido
+
+    @Column(nullable = false)
+    private LocalDate fechaNacimiento; // <-- Añadido
+
+    @Column(nullable = false, length = 9, unique = true)
+    private String dni; // <-- Añadido
 
     // ----------------------------------------------------------------------
-    // BORRADO LÓGICO
+    // 🏫 Relación ManyToOne
     // ----------------------------------------------------------------------
-    @Column(columnDefinition = "boolean default false")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "instituto_id", nullable = false)
+    private Instituto instituto;
+
+    // ----------------------------------------------------------------------
+    // 🕒 Metadatos
+    // ----------------------------------------------------------------------
+    @Column(name = "is_deleted", columnDefinition = "boolean default false")
     @Builder.Default
     private Boolean isDeleted = false;
 
-    // ----------------------------------------------------------------------
-    // FECHA DE CREACIÓN AUTOMÁTICA
-    // ----------------------------------------------------------------------
-    @Column(updatable = false, nullable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "created_at", updatable = false, nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // ----------------------------------------------------------------------
-    // FECHA DE ACTUALIZACIÓN AUTOMÁTICA
-    // ----------------------------------------------------------------------
-    @Column(nullable = false,
-            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @ManyToOne
-    @JoinColumn(name = "instituto_id")
-    private Instituto instituto;
-
-
-    //@JoinColumn(name = "instituto_id", nullable = false)
-    //private Instituto instituto;
-
-    // @ManyToOne → indica que muchos estudiantes pueden compartir un mismo instituto.
-    //
-    //@JoinColumn(name = "instituto_id") → define la columna en la tabla Estudiante que apunta al Instituto.
-    //
-    //nullable = false → asegura que un estudiante siempre pertenece a un instituto
-
+    @Column(unique = true, updatable = false, nullable = false)
+    @Builder.Default
+    private UUID uuid = UUID.randomUUID();
 }

@@ -1,22 +1,53 @@
-package es.juanito.institutos.estudiante.dto;
-
+package es.juanito.institutos.estudiantes.dto;
 
 import es.juanito.institutos.institutos.validators.InstitutoCode;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor; // Necesario para compatibilidad con @Builder
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor; // Necesario para Jackson (deserialización)
+import org.hibernate.validator.constraints.Length;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Builder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class EstudianteRequestDto {
-    @NotBlank(message = "El nombre no puede estar vacío")
-    @InstitutoCode
-    private final String codigoInstituto;
 
+    // --- CAMPOS DE SALIDA / IDENTIFICACIÓN (Se eliminó 'final') ---
+    private Long id;
+    private UUID uuid;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Boolean isDeleted;
+
+    // --- Campos de Búsqueda/Relación ---
+    @NotBlank(message = "El código del instituto no puede estar vacío")
+    @InstitutoCode
+    private String codigoInstituto;
+
+    // --- Campos de Datos del Estudiante (Se eliminó 'final') ---
     @NotBlank(message = "El nombre no puede estar vacío")
-    @Size(min = 3, max = 20, message = "El nombre debe tener entre 3 y 50 caracteres")
-    private final String nombre;
-    private final Boolean isDeleted;
+    @Length(min = 3, max = 50, message = "El nombre debe tener entre 3 y 50 caracteres")
+    private String nombre;
+
+    @NotBlank(message = "Los apellidos no pueden estar vacíos")
+    @Length(min = 2, max = 100, message = "Los apellidos deben tener entre 2 y 100 caracteres")
+    private String apellidos;
+
+    @Email(message = "El correo no tiene un formato válido")
+    @NotBlank(message = "El email es obligatorio")
+    private String email;
+
+    @Past(message = "La fecha de nacimiento debe ser anterior a la fecha actual")
+    @NotNull(message = "La fecha de nacimiento es obligatoria")
+    private LocalDate fechaNacimiento;
+
+    @NotBlank(message = "El DNI/NIE es obligatorio")
+    @Pattern(regexp = "^[0-9]{8}[A-Z]$", message = "El DNI/NIE debe tener 8 números y 1 letra (ej: 12345678A)")
+    private String dni;
 }

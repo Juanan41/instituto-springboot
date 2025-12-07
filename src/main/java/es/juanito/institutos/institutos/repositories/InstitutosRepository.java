@@ -18,27 +18,26 @@ public interface InstitutosRepository extends JpaRepository<Instituto, Long> {
     // Por ciudad y que isDeleted sea false
     //List<Instituto> findByCiudadAndIsDeletedFalse(String ciudad);
 
-    @Query("SELECT i FROM Instituto i WHERE LOWER(i.ciudad.nombre) LIKE %:ciudad% ")
-    List<Instituto> findByCiudadContainsIgnoreCase(String ciudad); // <-- FALTABA
-
-
     // Por nombre
     List<Instituto> findByNombreContainsIgnoreCase(String nombre);
-    List<Instituto> findByNombreContainsIgnoreCaseAndIsDeletedFalse(String nombre);
+    //List<Instituto> findByNombreContainsIgnoreCaseAndIsDeletedFalse(String nombre);
 
     // Por ciudad y nombre
-    @Query("SELECT i FROM Instituto i WHERE i.codigoInstituto = :codigoInstituto AND LOWER(i.ciudad.nombre) like %:ciudad%")
     List<Instituto> findByCiudadAndNombreContainsIgnoreCase(String ciudad, String nombre);
     //List<Instituto> findByCiudadAndNombreContainsIgnoreCaseAndIsDeletedFalse(String ciudad, String nombre);
 
+    /**
+     * Busca un Instituto por su código de negocio único.
+     * Este método es necesario para validar la Clave Foránea (FK) en EstudianteServiceImpl.
+     */
+    Optional<Instituto> findByCodigoInstituto(String codigoInstituto); // <--- ¡AÑADE ESTA LÍNEA!
+    List<Instituto> findByCiudadContainingIgnoreCase(String ciudad);
     // Por UUID
     Optional<Instituto> findByUuid(UUID uuid);
     boolean existsByUuid(UUID uuid);
     void deleteByUuid(UUID uuid);
 
-    // Si está borrado
-    List<Instituto> findByIsDeleted(Boolean isDeleted);
-
+    // Actualizar isDeleted a true (Soft Delete)
     @Modifying
     @Query("UPDATE Instituto i SET i.isDeleted = true WHERE i.id = :id")
     void updateIsDeletedToTrueById(Long id);

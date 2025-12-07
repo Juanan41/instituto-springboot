@@ -1,61 +1,197 @@
-package es.juanito.institutos.estudiante.services;
+package es.juanito.institutos.estudiantes.services;
 
-import es.juanito.institutos.estudiante.dto.EstudianteRequestDto;
-import es.juanito.institutos.estudiante.exceptions.EstudianteException;
-import es.juanito.institutos.estudiante.mappers.EstudianteMapper;
-import es.juanito.institutos.estudiante.models.Estudiante;
-import es.juanito.institutos.estudiante.repositories.EstudianteRepository;
+import es.juanito.institutos.estudiantes.dto.EstudianteRequestDto;
+import es.juanito.institutos.estudiantes.exceptions.EstudianteConflictException;
+import es.juanito.institutos.estudiantes.exceptions.EstudianteNotFoundException;
+import es.juanito.institutos.estudiantes.mappers.EstudianteMapper;
+import es.juanito.institutos.estudiantes.models.Estudiante;
+import es.juanito.institutos.institutos.models.Instituto; // Importar la clase Instituto
+import es.juanito.institutos.estudiantes.repositories.EstudianteRepository;
+import es.juanito.institutos.institutos.repositories.InstitutosRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
+@CacheConfig(cacheNames = {"estudiantes"})
 public class EstudianteServiceImpl implements EstudianteService {
 
     private final EstudianteRepository estudianteRepository;
     private final EstudianteMapper estudianteMapper;
+    private final InstitutosRepository institutosRepository;
 
-    @Override
-    public List<Estudiante> findAll(String codigoInstituto) {
-        if (codigoInstituto == null || codigoInstituto.isEmpty()) {
-            return estudianteRepository.findAll();
-        } else {
-            return estudianteRepository.findByCodigoInstitutoContainingIgnoreCase(codigoInstituto);
-        }
-    }
+    // --- Métodos Auxiliares ---
 
-    @Override
-    public Estudiante findByCodigoInstituto(String codigoInstituto) {
-        return estudianteRepository.findByCodigoInstitutoEqualsIgnoreCase(codigoInstituto)
-                .orElseThrow(() -> new EstudianteException("No se encontró el estudiante: " + codigoInstituto));
-    }
-
-    @Override
-    public Estudiante findById(Long id) {
+    /**
+     * Busca un Estudiante por ID o lanza EstudianteNotFoundException.
+     * @param id El ID del estudiante.
+     * @return La entidad Estudiante.
+     */
+    private Estudiante getEstudiante(Long id) {
         return estudianteRepository.findById(id)
-                .orElseThrow(() -> new EstudianteException("No se encontró el estudiante con id: " + id));
+                .orElseThrow(() -> new EstudianteNotFoundException(id));
     }
 
-    @Override
-    public Estudiante save(EstudianteRequestDto estudianteRequestDto) {
-        return estudianteRepository.save(estudianteMapper.toEstudiante(estudianteRequestDto));
+    /**
+     * Busca un Instituto por código o lanza EstudianteBadRequestException (para FK).
+     * @param codigoInstituto El código del instituto.
+     * @return La entidad Instituto.
+     */
+    private Instituto getInstitutoByCodigo(String codigoInstituto) {
+        return institutosRepository.findByCodigoInstituto(codigoInstituto)
+                .orElseThrow(() -> new EstudianteConflictException("Código de Instituto '" + codigoInstituto + "' no encontrado."));
     }
 
-    @Override
-    public Estudiante update(Long id, EstudianteRequestDto estudianteRequestDto) {
-        Estudiante estudianteActual = findById(id);
-        return estudianteRepository.save(estudianteMapper.toEstudiante(estudianteRequestDto, estudianteActual));
-    }
+    // --- Métodos de CRUD y Búsqueda ---
+
+    /**
+     * Busca todos los estudiantes, opcionalmente filtrando por código de Instituto.
+     * @param codigoInstituto Código para filtrar. Si es null o vacío, trae todos.
+     * @return Lista de EstudianteRequestDto.
+     */
+// En es.juanito.institutos.estudiantes.services.EstudianteServiceImpl
 
     @Override
+    public List<EstudianteRequestDto> findAll(String codigoInstituto, String nombre) {
+        log.info("Buscando estudiantes, filtro por código de instituto: {}, nombre: {}", codigoInstituto, nombre);
+        List<Estudiante> estudiantes;
+
+        // Lógica de filtrado complejo:
+        if ((codigoInstituto == null || codigoInstituto.isEmpty()) && (nombre == null || nombre.isEmpty())) {
+            // No hay filtros, trae todos
+            estudiantes = estudianteRepository.findAll();
+        } else if (codigoInstituto != null && !codigoInstituto.isEmpty()) {
+            // Filtra solo por código de instituto
+            estudiantes = estudianteRepository.findByInstitutoCodigoInstitutoContainsIgnoreCase(codigoInstituto);
+        } else if (nombre != null && !nombre.isEmpty()) {
+            // Filtra solo por nombre
+            estudiantes = estudianteRepository.findByNombreContainsIgnoreCase(nombre);
+        } else {
+            // Caso de filtrado complejo (si se necesitan ambos, requeriría un método en el repositorio
+            // como findByInstitutoCodigoInstitutoContainsIgnoreCaseAndNombreContainsIgnoreCase)
+            // Aquí, por simplicidad, usaremos solo uno si ambos están presentes:
+            estudiantes = estudianteRepository.findByInstitutoCodigoInstitutoContainsIgnoreCase(codigoInstituto);
+        }
+
+        // Aquí solo se usa el nombre:
+        // estudiantes = estudianteRepository.findByNombreContainsIgnoreCase(nombre);
+
+        return estudianteMapper.toRequestDtoList(estudiantes);
+    }
+
+    /**
+     * Busca estudiantes por nombre, ignorando mayúsculas/minúsculas.
+     * @param nombre Parte del nombre a buscar.
+     * @return Lista de EstudianteRequestDto.
+     */
+    @Override
+    public List<EstudianteRequestDto> findByNombre(String nombre) {
+        log.info("Buscando estudiantes por nombre: {}", nombre);
+        return estudianteMapper.toRequestDtoList(estudianteRepository.findByNombreContainsIgnoreCase(nombre));
+    }
+
+    /**
+     * Busca un estudiante por su identificador único de código de estudiante.
+     * @param codigoEstudiante Código del estudiante.
+     * @return EstudianteRequestDto.
+     */
+    @Override
+    // NOTA: Se ha corregido el nombre del método para reflejar el uso de "código de estudiante"
+    public EstudianteRequestDto findByCodigoEstudiante(String codigoEstudiante) {
+        log.info("Buscando estudiante por código de estudiante: {}", codigoEstudiante);
+
+        // En EstudianteServiceImpl.java (método findByCodigoEstudiante):
+        Estudiante estudiante = estudianteRepository.findByDniEqualsIgnoreCase(codigoEstudiante)
+                // ...
+                .orElseThrow(() -> new EstudianteNotFoundException("Estudiante no encontrado con código: " + codigoEstudiante));
+
+        // El DTO de retorno es el DTO de Request, como se ha indicado.
+        return estudianteMapper.toEstudianteRequestDto(estudiante);
+    }
+
+    /**
+     * Busca un estudiante por ID, usando caché.
+     * @param id El ID del estudiante.
+     * @return EstudianteRequestDto.
+     */
+    @Override
+    @Cacheable(key = "#id")
+    public EstudianteRequestDto findById(Long id) {
+        log.info("Buscando estudiante por id: {}", id);
+        return estudianteMapper.toEstudianteRequestDto(getEstudiante(id));
+    }
+
+    /**
+     * Guarda un nuevo estudiante, actualizando la caché.
+     * @param estudianteRequestDto Datos del estudiante.
+     * @return EstudianteRequestDto del estudiante guardado.
+     */
+    @Override
+    @CachePut(key = "#result.id")
+    @Transactional
+    public EstudianteRequestDto save(EstudianteRequestDto estudianteRequestDto) {
+        log.info("Guardando estudiante: {}", estudianteRequestDto);
+
+        // 1. Validar y obtener la entidad Instituto (FK)
+        Instituto instituto = getInstitutoByCodigo(estudianteRequestDto.getCodigoInstituto());
+
+        // 2. Mapear DTO a Entidad
+        Estudiante nuevoEstudiante = estudianteMapper.toEstudiante(estudianteRequestDto, instituto);
+
+        // 3. Guardar y devolver DTO de respuesta (EstudianteRequestDto)
+        return estudianteMapper.toEstudianteRequestDto(estudianteRepository.save(nuevoEstudiante));
+    }
+
+    /**
+     * Actualiza un estudiante existente, actualizando la caché.
+     * @param id ID del estudiante a actualizar.
+     * @param estudianteRequestDto Datos para la actualización.
+     * @return EstudianteRequestDto del estudiante actualizado.
+     */
+    @Override
+    @CachePut(key = "#result.id")
+    @Transactional
+    public EstudianteRequestDto update(Long id, EstudianteRequestDto estudianteRequestDto) {
+        log.info("Actualizando estudiante id={} con datos: {}", id, estudianteRequestDto);
+
+        // 1. Buscar el estudiante existente
+        Estudiante estudianteActual = getEstudiante(id);
+
+        // 2. Obtener el Instituto (puede cambiar)
+        Instituto nuevoInstituto = getInstitutoByCodigo(estudianteRequestDto.getCodigoInstituto());
+
+        // 3. Mapear DTO a Entidad, aplicando las actualizaciones
+        Estudiante estudianteActualizado = estudianteMapper.toEstudiante(estudianteRequestDto, estudianteActual, nuevoInstituto);
+
+        // 4. Guardar y devolver DTO de respuesta (EstudianteRequestDto)
+        return estudianteMapper.toEstudianteRequestDto(estudianteRepository.save(estudianteActualizado));
+    }
+
+    /**
+     * Realiza un borrado lógico (Soft Delete) de un estudiante y elimina la entrada de caché.
+     * @param id ID del estudiante a borrar.
+     */
+    @Override
+    @CacheEvict(key = "#id")
     @Transactional
     public void deleteById(Long id) {
-        Estudiante estudiante = findById(id);
-        // Para evitar borrado físico, lo marcamos como borrado
-        estudiante.setIsDeleted(true);
-        estudianteRepository.save(estudiante);
+        log.debug("Borrando (Soft Delete) estudiante por id: {}", id);
+
+        // 1. Buscar si existe (lanza 404 si no)
+        if (!estudianteRepository.existsById(id)) {
+            throw new EstudianteNotFoundException(id);
+        }
+
+        // 2. Realizar el Soft Delete
+        estudianteRepository.updateIsDeletedToTrueById(id);
     }
 }

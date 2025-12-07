@@ -1,0 +1,108 @@
+### CRUD COMPLETO: ESTUDIANTES
+
+# Nota: Los IDs 1, 2 y 3 existen al iniciar la aplicación (Juan, Ana, Carlos).
+
+# -----------------------------------------------------------
+# 1. GET – Obtener todos los estudiantes (Lista de EstudianteRequestDto)
+# -----------------------------------------------------------
+GET http://localhost:3000/api/v1/estudiantes
+
+###
+
+# -----------------------------------------------------------
+# 2. GET – Buscar estudiantes por DNI o código de Instituto
+# Asumiendo que el servicio permite filtrar por DNI o codigoInstituto
+# -----------------------------------------------------------
+# Buscar por DNI existente (Juan)
+GET http://localhost:3000/api/v1/estudiantes?dni=11111111A
+
+###
+# Buscar por código de Instituto (Instituto Central)
+GET http://localhost:3000/api/v1/estudiantes?codigoInstituto=INST001
+
+###
+
+# -----------------------------------------------------------
+# 3. GET – Obtener estudiante por ID
+# ID 3 corresponde a Carlos Pérez del Instituto Norte
+# -----------------------------------------------------------
+GET http://localhost:3000/api/v1/estudiantes/3
+
+###
+
+# -----------------------------------------------------------
+# 4. POST – Crear nuevo Estudiante (correcto)
+# codigoInstituto 'INST002' existe en la base de datos (Instituto Norte)
+# -----------------------------------------------------------
+POST http://localhost:3000/api/v1/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Elena",
+  "apellidos": "García",
+  "email": "elena.g@nuevo.com",
+  "fechaNacimiento": "2005-11-20",
+  "dni": "55555555Z",
+  "codigoInstituto": "INT-0022"
+}
+
+###
+
+# -----------------------------------------------------------
+# 5. POST – Errores de validación (HTTP 400 Bad Request)
+# DNI no puede ser vacío (asumiendo validación NotBlank)
+# -----------------------------------------------------------
+POST http://localhost:3000/api/v1/estudiantes
+Content-Type: application/json
+
+{
+  "nombre": "Fallo",
+  "apellidos": "Validacion",
+  "email": "invalido@error.com",
+  "fechaNacimiento": "2000-01-01",
+  "dni": "",
+  "codigoInstituto": "INT-0011"
+}
+
+###
+
+# -----------------------------------------------------------
+# 6. PUT – Actualización COMPLETA del Estudiante (ID 1 = Juan)
+# Se deben enviar todos los campos (o nulos si el DTO lo permite)
+# Cambiamos su instituto a INST002 (Instituto Norte)
+# -----------------------------------------------------------
+PUT http://localhost:3000/api/v1/estudiantes/1
+Content-Type: application/json
+
+{
+  "nombre": "Juan Actualizado",
+  "apellidos": "Diaz Nueva",
+  "email": "juan.nuevo@example.com",
+  "fechaNacimiento": "1995-01-01",
+  "dni": "11111111A",
+  "codigoInstituto": "INT002",
+  "isDeleted": false
+}
+
+###
+
+# -----------------------------------------------------------
+# 7. PATCH – Actualización parcial del Estudiante (ID 2 = Ana)
+# Marcamos como borrado lógico y cambiamos el email
+# -----------------------------------------------------------
+PATCH http://localhost:3000/api/v1/estudiantes/2
+Content-Type: application/json
+
+{
+  "email": "ana.actualizado@mail.com",
+  "isDeleted": true
+}
+
+###
+
+# -----------------------------------------------------------
+# 8. DELETE – Eliminación LÓGICA del registro (ID 3 = Carlos)
+# La eliminación LÓGICA establece isDeleted = true
+# -----------------------------------------------------------
+DELETE http://localhost:3000/api/v1/estudiantes/4
+

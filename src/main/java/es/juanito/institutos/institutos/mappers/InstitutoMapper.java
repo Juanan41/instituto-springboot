@@ -1,83 +1,90 @@
 package es.juanito.institutos.institutos.mappers;
 
-import es.juanito.institutos.estudiante.models.Estudiante;
 import es.juanito.institutos.institutos.dto.InstitutoCreateDto;
 import es.juanito.institutos.institutos.dto.InstitutoResponseDto;
 import es.juanito.institutos.institutos.dto.InstitutoUpdateDto;
 import es.juanito.institutos.institutos.models.Instituto;
+import es.juanito.institutos.estudiantes.models.Estudiante;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set; // Importar Set
 import java.util.UUID;
+import java.util.stream.Collectors; // Importar Collectors
 
 @Component
 public class InstitutoMapper {
-    public Instituto toInstituto(InstitutoCreateDto institutoCreateDto, Estudiante estudiante) {
+
+    public Instituto toInstituto(InstitutoCreateDto dto) {
         return Instituto.builder()
                 .id(null)
-                .nombre(institutoCreateDto.getNombre())
-                .ciudad(institutoCreateDto.getCiudad())
-                .direccion(institutoCreateDto.getDireccion())
-                .telefono(institutoCreateDto.getTelefono())
-                .email(institutoCreateDto.getEmail())
-                .estudiantes(estudiantes)
-                .numeroProfesores(institutoCreateDto.getNumeroProfesores())
-                .tipo(institutoCreateDto.getTipo())
-                .anioFundacion(institutoCreateDto.getAnioFundacion())
-                .codigoInstituto(institutoCreateDto.getCodigoInstituto())
-                .createdAt(LocalDateTime.now())
-                .updateAt(LocalDateTime.now())
+                .nombre(dto.getNombre())
+                .ciudad(dto.getCiudad())
+                .direccion(dto.getDireccion())
+                .telefono(dto.getTelefono())
+                .email(dto.getEmail())
+                .numeroProfesores(dto.getNumeroProfesores())
+                .tipo(dto.getTipo())
+                .anioFundacion(dto.getAnioFundacion())
+                .codigoInstituto(dto.getCodigoInstituto())
                 .uuid(UUID.randomUUID())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .isDeleted(false)
+                .estudiantes(new HashSet<>()) // CORREGIDO: Usar HashSet en lugar de Collections.emptyList()
                 .build();
-
-
     }
 
+    public Instituto toInstituto(InstitutoUpdateDto dto, Instituto instituto) {
+        // La lógica de actualización es correcta, solo aseguramos que 'estudiantes' sea un Set
+        Set<Estudiante> estudiantesSet = instituto.getEstudiantes() != null ? instituto.getEstudiantes() : new HashSet<>();
 
-    public Instituto toInstituto(InstitutoUpdateDto institutoUpdateDto, Instituto instituto) {
         return Instituto.builder()
                 .id(instituto.getId())
-                .nombre(institutoUpdateDto.getNombre() != null ? institutoUpdateDto.getNombre() : instituto.getNombre())
-                .ciudad(institutoUpdateDto.getCiudad() != null ? institutoUpdateDto.getCiudad() : instituto.getCiudad())
-                .direccion(institutoUpdateDto.getDireccion() != null ? institutoUpdateDto.getDireccion() : instituto.getDireccion())
-                .telefono(institutoUpdateDto.getTelefono() != null ? institutoUpdateDto.getTelefono() : instituto.getTelefono())
-                .email(institutoUpdateDto.getEmail() != null ? institutoUpdateDto.getEmail() : instituto.getEmail())
-                .estudiantes(instituto.getEstudiantes())
-                .numeroProfesores(institutoUpdateDto.getNumeroProfesores() != null ? institutoUpdateDto.getNumeroProfesores() : instituto.getNumeroProfesores())
-                .tipo(institutoUpdateDto.getTipo() != null ? institutoUpdateDto.getTipo() : instituto.getTipo())
-                .anioFundacion(institutoUpdateDto.getAnioFundacion() != null ? institutoUpdateDto.getAnioFundacion() : instituto.getAnioFundacion())
-                .codigoInstituto(institutoUpdateDto.getCodigoInstituto() != null ? institutoUpdateDto.getCodigoInstituto() : instituto.getCodigoInstituto())
+                .nombre(dto.getNombre() != null ? dto.getNombre() : instituto.getNombre())
+                .ciudad(dto.getCiudad() != null ? dto.getCiudad() : instituto.getCiudad())
+                .direccion(dto.getDireccion() != null ? dto.getDireccion() : instituto.getDireccion())
+                .telefono(dto.getTelefono() != null ? dto.getTelefono() : instituto.getTelefono())
+                .email(dto.getEmail() != null ? dto.getEmail() : instituto.getEmail())
+                .numeroProfesores(dto.getNumeroProfesores() != null ? dto.getNumeroProfesores() : instituto.getNumeroProfesores())
+                .tipo(dto.getTipo() != null ? dto.getTipo() : instituto.getTipo())
+                .anioFundacion(dto.getAnioFundacion() != null ? dto.getAnioFundacion() : instituto.getAnioFundacion())
+                .codigoInstituto(dto.getCodigoInstituto() != null ? dto.getCodigoInstituto() : instituto.getCodigoInstituto())
+                .estudiantes(estudiantesSet) // Mantenemos el Set existente
                 .createdAt(instituto.getCreatedAt())
-                .updateAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .uuid(instituto.getUuid())
+                .isDeleted(instituto.getIsDeleted())
                 .build();
     }
 
-
     public InstitutoResponseDto toInstitutoResponseDto(Instituto instituto) {
+        // Mapeamos los nombres, asegurando que trabajamos con un Set
+        List<String> estudiantesNombres = instituto.getEstudiantes() != null ?
+                instituto.getEstudiantes().stream().map(Estudiante::getNombre).toList() :
+                Collections.emptyList();
+
         return InstitutoResponseDto.builder()
                 .id(instituto.getId())
                 .nombre(instituto.getNombre())
                 .ciudad(instituto.getCiudad())
                 .direccion(instituto.getDireccion())
                 .telefono(instituto.getTelefono())
-                .estudiantes(
-                        instituto.getEstudiantes().stream()
-                                .map(Estudiante::getNombre)
-                                .toList()
-                )
+                .email(instituto.getEmail())
                 .numeroProfesores(instituto.getNumeroProfesores())
                 .tipo(instituto.getTipo())
                 .anioFundacion(instituto.getAnioFundacion())
                 .codigoInstituto(instituto.getCodigoInstituto())
                 .createdAt(instituto.getCreatedAt())
-                .updatedAt(instituto.getUpdateAt())
+                .updatedAt(instituto.getUpdatedAt())
                 .uuid(instituto.getUuid())
+                .estudiantes(estudiantesNombres) // El DTO de respuesta usa List<String>
                 .build();
     }
 
-    // Mappeamos de modelo a DTO (lista)
     public List<InstitutoResponseDto> toResponseDtoList(List<Instituto> institutos) {
         return institutos.stream()
                 .map(this::toInstitutoResponseDto)

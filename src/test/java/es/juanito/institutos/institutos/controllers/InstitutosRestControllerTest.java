@@ -1,6 +1,5 @@
 package es.juanito.institutos.institutos.controllers;
 
-import es.juanito.institutos.institutos.dto.InstitutoCreateDto;
 import es.juanito.institutos.institutos.dto.InstitutoResponseDto;
 import es.juanito.institutos.institutos.dto.InstitutoUpdateDto;
 import es.juanito.institutos.institutos.exceptions.InstitutoNotFoundException;
@@ -17,7 +16,6 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import java.time.LocalDate;
 import java.util.List;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -27,6 +25,7 @@ class InstitutosRestControllerTest {
 
     private final String ENDPOINT = "/api/v1/institutos";
 
+    //Eliminó la referencia incorrecta a .numeroEstudiantes(int)
     private final InstitutoResponseDto institutoResponse1 = InstitutoResponseDto.builder()
             .id(1L)
             .nombre("Gomez Moreno")
@@ -34,13 +33,13 @@ class InstitutosRestControllerTest {
             .direccion("Calle Albaida")
             .telefono("777-88-99-00")
             .email("pepito@correo.com")
-            .numeroEstudiantes(555)
             .numeroProfesores(20)
             .tipo("publico")
-            .anioFundacion(LocalDate.of(1983,12,19))
+            .anioFundacion(LocalDate.of(1983, 12, 19))
             .codigoInstituto("4567-XXX")
             .build();
 
+    //Eliminó la referencia incorrecta a .numeroEstudiantes(int)
     private final InstitutoResponseDto institutoResponse2 = InstitutoResponseDto.builder()
             .id(2L)
             .nombre("IES Francisco de Quevedo")
@@ -48,10 +47,9 @@ class InstitutosRestControllerTest {
             .direccion("Avenida de los Poblados")
             .telefono("888-99-00-11")
             .email("manolita@correo.com")
-            .numeroEstudiantes(1250)
             .numeroProfesores(60)
             .tipo("privado")
-            .anioFundacion(LocalDate.of(1956,6,9))
+            .anioFundacion(LocalDate.of(1956, 6, 9))
             .codigoInstituto("6789-ZZZ")
             .build();
 
@@ -198,7 +196,6 @@ class InstitutosRestControllerTest {
         "direccion": "Calle Barlovento",
         "telefono": "999-88-77-00",
         "email": "contacto@lasmeigas.com",
-        "numeroEstudiantes": 245,
         "numeroProfesores": 20,
         "tipo": "publico",
         "anioFundacion": "2000-05-12",
@@ -214,7 +211,7 @@ class InstitutosRestControllerTest {
                 .direccion("Calle Barlovento")
                 .telefono("999-88-77-00")
                 .email("contacto@lasmeigas.com")
-                .numeroEstudiantes(245)
+                // Eliminó la referencia a .numeroEstudiantes(int)
                 .numeroProfesores(20)
                 .tipo("publico")
                 .anioFundacion(LocalDate.of(2000, 5, 12))
