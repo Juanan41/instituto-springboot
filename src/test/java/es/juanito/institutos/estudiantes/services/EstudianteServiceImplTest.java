@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class EstudianteServiceImplTest {
@@ -44,6 +46,8 @@ class EstudianteServiceImplTest {
     private EstudianteRequestDto requestDto2;
     private List<Estudiante> estudiantesList;
     private List<EstudianteRequestDto> dtoList;
+    private Pageable pageable;
+    private Page<Estudiante> estudiantePage;
 
     @BeforeEach
     void setUp() {
@@ -73,6 +77,10 @@ class EstudianteServiceImplTest {
 
         estudiantesList = List.of(estudiante1, estudiante2);
         dtoList = List.of(requestDto1, requestDto2);
+
+        // Inicializar objetos de paginación
+        pageable = PageRequest.of(0, 10, Sort.by("nombre").ascending());
+        estudiantePage = new PageImpl<>(estudiantesList, pageable, estudiantesList.size());
     }
 
     // ----------------------------------------------------------------------
@@ -80,54 +88,59 @@ class EstudianteServiceImplTest {
     // ----------------------------------------------------------------------
 
     @Test
-    void testFindAll_NoFiltros() {
+    void testFindAllPaginado_NoFiltros() {
         // Arrange
-        when(estudianteRepository.findAll()).thenReturn(estudiantesList);
-        // ✅ Mockear el mapeo de Entidad a DTO (según el contrato del servicio)
-        when(estudianteMapper.toRequestDtoList(estudiantesList)).thenReturn(dtoList);
+        // ✅ DEBE DEVOLVER PAGE
+        when(estudianteRepository.findAll(pageable)).thenReturn(estudiantePage);
+        // ✅ Mockear el mapeo de Page<Entidad> a Page<DTO>
+        when(estudianteMapper.toEstudianteRequestDto(any(Estudiante.class))).thenReturn(requestDto1, requestDto2);
 
         // Act
-        // ✅ CORRECCIÓN: Esperamos List<EstudianteRequestDto>
-        List<EstudianteRequestDto> result = estudianteService.findAll(null, null);
+        // ✅ CORRECCIÓN: Llamamos con los 3 argumentos (null, null, pageable)
+        Page<EstudianteRequestDto> result = estudianteService.findAll(null, null, pageable);
 
         // Assert
-        assertAll("findAll",
+        assertAll("findAllPaginado",
                 () -> assertNotNull(result),
-                () -> assertEquals(2, result.size())
+                () -> assertEquals(2, result.getTotalElements()),
+                () -> assertEquals(2, result.getContent().size())
         );
 
         // Verify
-        verify(estudianteRepository, times(1)).findAll();
-        verify(estudianteMapper, times(1)).toRequestDtoList(estudiantesList);
+        verify(estudianteRepository, times(1)).findAll(pageable);
+        // Se llama al mapeo tantas veces como elementos haya en la página (2)
+        verify(estudianteMapper, times(2)).toEstudianteRequestDto(any(Estudiante.class));
     }
 
     @Test
-    void testFindAll_PorCodigoInstituto() {
+    void testFindAllPaginado_PorCodigoInstituto() {
         // Arrange
         String codigo = "I-TEST";
-        when(estudianteRepository.findByInstitutoCodigoInstitutoContainsIgnoreCase(codigo)).thenReturn(estudiantesList);
-        // ✅ Mockear el mapeo
-        when(estudianteMapper.toRequestDtoList(estudiantesList)).thenReturn(dtoList);
+        // ✅ Mockear el Repositorio usando el método paginado CORREGIDO (con guion bajo y Pageable)
+        when(estudianteRepository.findByInstituto_CodigoInstitutoContainsIgnoreCase(codigo, pageable)).thenReturn(estudiantePage);
+        when(estudianteMapper.toEstudianteRequestDto(any(Estudiante.class))).thenReturn(requestDto1, requestDto2);
 
         // Act
-        // ✅ CORRECCIÓN: Esperamos List<EstudianteRequestDto>
-        List<EstudianteRequestDto> result = estudianteService.findAll(codigo, null);
+        // ✅ CORRECCIÓN: Llamamos con los 3 argumentos (codigo, null, pageable)
+        Page<EstudianteRequestDto> result = estudianteService.findAll(codigo, null, pageable);
 
         // Assert
-        assertAll("findAll_PorCodigo",
+        assertAll("findAllPaginado_PorCodigo",
                 () -> assertNotNull(result),
-                () -> assertEquals(2, result.size())
+                () -> assertEquals(2, result.getTotalElements())
         );
 
         // Verify
-        verify(estudianteRepository, times(1)).findByInstitutoCodigoInstitutoContainsIgnoreCase(codigo);
-        verify(estudianteMapper, times(1)).toRequestDtoList(estudiantesList);
+        // ✅ Verificamos la llamada CORRECTA
+        verify(estudianteRepository, times(1)).findByInstituto_CodigoInstitutoContainsIgnoreCase(codigo, pageable);
+        verify(estudianteMapper, times(2)).toEstudianteRequestDto(any(Estudiante.class));
     }
 
-    // ----------------------------------------------------------------------
-    // 2. FIND BY ID (Devuelve DTO)
-    // ----------------------------------------------------------------------
+    // Se recomienda añadir testFindAllPaginado_PorNombre y testFindAllPaginado_PorAmbos
 
+    // ----------------------------------------------------------------------
+    // 2. FIND BY ID (Se mantiene igual, sin paginación)
+    // ----------------------------------------------------------------------
     @Test
     void testFindById_Existente() {
         // Arrange

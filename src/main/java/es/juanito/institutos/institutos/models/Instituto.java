@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate; // Necesario para anioFundacion
 import java.time.LocalDateTime;
@@ -23,22 +24,21 @@ import java.util.UUID;
 public class Instituto {
 
     // ----------------------------------------------------------------------
-    // 🔑 Clave Primaria y Metadatos
+    //  Clave Primaria y Metadatos
     // ----------------------------------------------------------------------
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, updatable = false, nullable = false, columnDefinition = "BINARY(16)")
-    @Builder.Default
+    @Column(name = "uuid", unique = true, updatable = false, nullable = false, length = 36)
     private UUID uuid = UUID.randomUUID();
 
     // ----------------------------------------------------------------------
     // 🏫 Datos de Negocio
     // ----------------------------------------------------------------------
 
-    @Column(nullable = false, unique = true, length = 10)
-    private String codigoInstituto; // Identificador único de negocio
+    @Column(name = "codigo_instituto", nullable = false, unique = true, length = 10)
+    private String codigoInstituto;
 
     @Column(nullable = false, length = 100)
     private String nombre;
@@ -57,13 +57,13 @@ public class Instituto {
     @Column(nullable = false, length = 100, unique = true)
     private String email;
 
-    @Column
+    @Column(name = "numero_profesores")
     private Integer numeroProfesores;
 
     @Column(length = 20)
     private String tipo; // Ej: público, privado, concertado
 
-    @Column
+    @Column(name = "anio_fundacion")
     private LocalDate anioFundacion; // Usamos LocalDate
 
     // ----------------------------------------------------------------------
@@ -93,7 +93,8 @@ public class Instituto {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(columnDefinition = "boolean default false")
+    @ColumnDefault("FALSE")
+    @Column(nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;
 

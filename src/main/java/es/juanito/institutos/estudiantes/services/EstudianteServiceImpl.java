@@ -14,6 +14,8 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page; // Nueva importación para paginación
+import org.springframework.data.domain.Pageable; // Nueva importación para paginación
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,45 +56,57 @@ public class EstudianteServiceImpl implements EstudianteService {
     // --- Métodos de CRUD y Búsqueda ---
 
     /**
-     * Busca todos los estudiantes, opcionalmente filtrando por código de Instituto.
-     * @param codigoInstituto Código para filtrar. Si es null o vacío, trae todos.
-     * @return Lista de EstudianteRequestDto.
+     * Obtiene todos los estudiantes con paginación y filtros opcionales por código de Instituto o nombre.
+     *
+     * @param codigoInstituto Código para filtrar (opcional).
+     * @param nombre Nombre para filtrar (opcional).
+     * @param pageable Objeto de paginación y ordenación de Spring.
+     * @return Página de EstudianteRequestDto.
      */
-// En es.juanito.institutos.estudiantes.services.EstudianteServiceImpl
-
     @Override
-    public List<EstudianteRequestDto> findAll(String codigoInstituto, String nombre) {
-        log.info("Buscando estudiantes, filtro por código de instituto: {}, nombre: {}", codigoInstituto, nombre);
-        List<Estudiante> estudiantes;
+    public Page<EstudianteRequestDto> findAll(String codigoInstituto, String nombre, Pageable pageable) {
+        log.info("Buscando estudiantes paginados, filtro: código={}, nombre={}, pageable={}", codigoInstituto, nombre, pageable);
+        Page<Estudiante> estudiantesPage;
 
-        // Lógica de filtrado complejo:
-        if ((codigoInstituto == null || codigoInstituto.isEmpty()) && (nombre == null || nombre.isEmpty())) {
-            // No hay filtros, trae todos
-            estudiantes = estudianteRepository.findAll();
-        } else if (codigoInstituto != null && !codigoInstituto.isEmpty()) {
-            // Filtra solo por código de instituto
-            estudiantes = estudianteRepository.findByInstitutoCodigoInstitutoContainsIgnoreCase(codigoInstituto);
-        } else if (nombre != null && !nombre.isEmpty()) {
-            // Filtra solo por nombre
-            estudiantes = estudianteRepository.findByNombreContainsIgnoreCase(nombre);
-        } else {
-            // Caso de filtrado complejo (si se necesitan ambos, requeriría un método en el repositorio
-            // como findByInstitutoCodigoInstitutoContainsIgnoreCaseAndNombreContainsIgnoreCase)
-            // Aquí, por simplicidad, usaremos solo uno si ambos están presentes:
-            estudiantes = estudianteRepository.findByInstitutoCodigoInstitutoContainsIgnoreCase(codigoInstituto);
+        // Limpiamos los filtros para facilitar las comprobaciones
+        boolean hasCodigo = codigoInstituto != null && !codigoInstituto.trim().isEmpty();
+        boolean hasNombre = nombre != null && !nombre.trim().isEmpty();
+
+        if (!hasCodigo && !hasNombre) {
+            // Caso 1: Sin filtros, trae todos
+            estudiantesPage = estudianteRepository.findAll(pageable);
+        } else if (hasCodigo && hasNombre) {
+            // Caso 2: Filtrado por Instituto Y Nombre
+            // NOTA: NECESITAS DEFINIR ESTE MÉTODO EN TU REPOSITORIO
+            estudiantesPage = estudianteRepository.findByInstituto_CodigoInstitutoContainsIgnoreCaseAndNombreContainsIgnoreCase(
+                    codigoInstituto, nombre, pageable
+            );
+        } else if (hasCodigo) {
+            // Caso 3: Filtrado solo por Instituto
+            // NOTA: NECESITAS DEFINIR ESTE MÉTODO EN TU REPOSITORIO
+            estudiantesPage = estudianteRepository.findByInstituto_CodigoInstitutoContainsIgnoreCase(
+                    codigoInstituto, pageable
+            );
+        } else { // if (hasNombre)
+            // Caso 4: Filtrado solo por Nombre
+            // NOTA: NECESITAS DEFINIR ESTE MÉTODO EN TU REPOSITORIO
+            estudiantesPage = estudianteRepository.findByNombreContainsIgnoreCase(nombre, pageable);
         }
 
-        // Aquí solo se usa el nombre:
-        // estudiantes = estudianteRepository.findByNombreContainsIgnoreCase(nombre);
-
-        return estudianteMapper.toRequestDtoList(estudiantes);
+        // Mapear la página de Entidades (Estudiante) a la página de DTOs (EstudianteRequestDto)
+        return estudiantesPage.map(estudianteMapper::toEstudianteRequestDto);
     }
+    // El método findAll anterior (sin paginación) ya no es necesario o debería renombrarse:
+    /*
+    @Override
+    public List<EstudianteRequestDto> findAll(String codigoInstituto, String nombre) {
+        // ... Lógica anterior que devuelve List<EstudianteRequestDto> ...
+    }
+    */
 
-    /**
-     * Busca estudiantes por nombre, ignorando mayúsculas/minúsculas.
-     * @param nombre Parte del nombre a buscar.
-     * @return Lista de EstudianteRequestDto.
-     */
+    // El método findByNombre ya no es necesario si se usa el método findAll paginado
+    // para todas las búsquedas de lista. Se mantiene si se requiere una búsqueda no paginada.
+
     @Override
     public List<EstudianteRequestDto> findByNombre(String nombre) {
         log.info("Buscando estudiantes por nombre: {}", nombre);

@@ -44,7 +44,12 @@ class EstudianteRepositoryTest {
         // Lo persistimos aquí, ya que el script SQL solo crea el esquema,
         // o si el script inserta datos, este insertará un nuevo instituto.
         instituto1 = entityManager.persist(Instituto.builder()
-                .nombre("IES Central").codigoInstituto("IC-01").build());
+                .nombre("IES Central")
+                .codigoInstituto("ICA-0077")
+                .direccion("Calle Rodea Paredes")
+                .ciudad("Tenerife")
+                .email("wwww@gmail.com")
+                .build());
 
         // 2. Asignar la FK al Estudiante
         estudiante.setInstituto(instituto1);

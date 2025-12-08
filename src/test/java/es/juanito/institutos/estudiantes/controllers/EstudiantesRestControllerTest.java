@@ -14,7 +14,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.test.web.servlet.assertj.MockMvcTester;import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import es.juanito.institutos.pagination.utils.PageResponse; // Importa tu DTO de respuesta paginada
+import static org.mockito.ArgumentMatchers.any;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -69,11 +75,19 @@ class EstudiantesRestControllerTest {
     void getAll() {
         // Arrange
         var dtoList = List.of(dto1, dto2);
-        when(estudianteService.findAll(isNull(), isNull())).thenReturn(dtoList);
+        // Crear la página simulada que devolverá el Servicio (Page<DTO>)
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EstudianteRequestDto> mockPage = new PageImpl<>(dtoList, pageable, dtoList.size());
+
+        // Crear el PageResponse que devolverá el Controller (PageResponse<DTO>)
+        PageResponse<EstudianteRequestDto> pageResponse = PageResponse.of(mockPage, "nombre", "asc");
+        // Mockear la llamada al Servicio con los 3 argumentos esperados (filtros null + Pageable)
+        // El servicio devuelve Page<DTO>
+        when(estudianteService.findAll(isNull(), isNull(), any(Pageable.class))).thenReturn(mockPage);
 
         // Act
         var result = mockMvcTester.get()
-                .uri(ENDPOINT)
+                .uri(ENDPOINT + "?page=0&size=10&sortBy=nombre&direction=asc")
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange();
 
@@ -81,13 +95,16 @@ class EstudiantesRestControllerTest {
         assertThat(result)
                 .hasStatusOk()
                 .bodyJson().satisfies(json -> {
-                    assertThat(json).extractingPath("$.length()").isEqualTo(dtoList.size());
-                    assertThat(json).extractingPath("$[0]")
+                    // Assert sobre el contenido de la PageResponse
+                    assertThat(json).extractingPath("$.content.length()").isEqualTo(dtoList.size());
+                    assertThat(json).extractingPath("$.content[0]")
                             .convertTo(EstudianteRequestDto.class).usingRecursiveComparison().isEqualTo(dto1);
+                    assertThat(json).extractingPath("$.totalPages").isEqualTo(1);
                 });
 
         // Verify
-        verify(estudianteService, times(1)).findAll(isNull(), isNull());
+        // Verificar la llamada al servicio con los 3 argumentos
+        verify(estudianteService, times(1)).findAll(isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -95,11 +112,19 @@ class EstudiantesRestControllerTest {
         // Arrange
         var estudiantes = List.of(dto2);
         String nombre = dto2.getNombre();
-        when(estudianteService.findAll(isNull(), anyString())).thenReturn(estudiantes);
+        // Crear la página simulada
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EstudianteRequestDto> mockPage = new PageImpl<>(estudiantes, pageable, estudiantes.size());
+        PageResponse<EstudianteRequestDto> pageResponse = PageResponse.of(mockPage, "nombre", "asc");
+
+        // Mockear la llamada al Servicio con 3 argumentos (filtro nombre + Pageable)
+        // Usamos any(String.class) para el código de instituto, ya que es opcional
+        when(estudianteService.findAll(isNull(), eq(nombre), any(Pageable.class))).thenReturn(mockPage);
 
         // Act
+        // Añadir parámetros de paginación a la URI
         var result = mockMvcTester.get()
-                .uri(ENDPOINT + "?nombre=" + nombre)
+                .uri(ENDPOINT + "?nombre=" + nombre + "&page=0&size=10")
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange();
 
@@ -107,13 +132,16 @@ class EstudiantesRestControllerTest {
         assertThat(result)
                 .hasStatusOk()
                 .bodyJson().satisfies(json -> {
-                    assertThat(json).extractingPath("$.length()").isEqualTo(estudiantes.size());
-                    assertThat(json).extractingPath("$[0]")
-                            .convertTo(Estudiante.class).usingRecursiveComparison().isEqualTo(dto2);
+                    // Assert sobre el contenido de la PageResponse
+                    assertThat(json).extractingPath("$.content.length()").isEqualTo(estudiantes.size());
+                    assertThat(json).extractingPath("$.content[0]")
+                            .convertTo(EstudianteRequestDto.class).usingRecursiveComparison().isEqualTo(dto2);
+                    assertThat(json).extractingPath("$.totalElements").isEqualTo(1);
                 });
 
         // Verify
-        verify(estudianteService, times(1)).findAll(isNull(), eq(nombre));
+        // Verificar la llamada al servicio con los 3 argumentos
+        verify(estudianteService, times(1)).findAll(isNull(), eq(nombre), any(Pageable.class));
     }
 
     // --- 2. GET BY ID (findById) ---
@@ -244,8 +272,12 @@ class EstudiantesRestControllerTest {
         // Arrange
         String requestBody = """
                 {
-                   "dni": "11111111A", 
-                   "nombre": "Test"
+                   "dni": "11111111A",
+                   "nombre": "Test",
+                   "apellidos": "Ficticios",
+                   "email": "nuevo@conflicto.com",
+                   "fechaNacimiento": "2000-01-01",
+                   "codigoInstituto": "INT-9999"
                 
                 }
                 """;
@@ -286,7 +318,8 @@ class EstudiantesRestControllerTest {
                "apellidos": "RAMIREZ",
                "dni": "11111111A",
                "email": "ana@test.com",
-               "codigoInstituto": "INT-0044"
+               "codigoInstituto": "INT-0044",
+               "fechaNacimiento": "2000-01-01"
             }
             """;
 
@@ -329,7 +362,11 @@ class EstudiantesRestControllerTest {
         String requestBody = """
                 {
                    "nombre": "TEST",
-                   "dni": "99999999Z"
+                   "dni": "99999999Z",
+                   "apellidos": "RAMIREZ",
+                   "fechaNacimiento": "2000-11-01",
+                   "codigoInstituto": "INT-0055",
+                   "email": "eeeee@gmail.com"
                 }
                 """;
         when(estudianteService.update(anyLong(), any(EstudianteRequestDto.class))).thenThrow(new EstudianteNotFoundException(id));

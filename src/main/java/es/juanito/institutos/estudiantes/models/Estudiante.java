@@ -1,6 +1,7 @@
 package es.juanito.institutos.estudiantes.models;
 
 import es.juanito.institutos.institutos.models.Instituto;
+import org.hibernate.annotations.ColumnDefault;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate; // Importar LocalDate para la fecha de nacimiento
@@ -31,11 +32,11 @@ public class Estudiante {
     @Column(nullable = false, length = 100)
     private String apellidos; // <-- Añadido
 
-    @Column(nullable = false, length = 100, unique = true)
-    private String email; // <-- Añadido
+    @Column(name = "EMAIL", unique = true, nullable = false, length = 100)
+    private String email;
 
-    @Column(nullable = false)
-    private LocalDate fechaNacimiento; // <-- Añadido
+    @Column(name = "fechaNacimiento", nullable = false)
+    private LocalDate fechaNacimiento;
 
     @Column(nullable = false, length = 9, unique = true)
     private String dni; // <-- Añadido
@@ -50,7 +51,8 @@ public class Estudiante {
     // ----------------------------------------------------------------------
     // 🕒 Metadatos
     // ----------------------------------------------------------------------
-    @Column(name = "is_deleted", columnDefinition = "boolean default false")
+    @ColumnDefault("FALSE")
+    @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;
 

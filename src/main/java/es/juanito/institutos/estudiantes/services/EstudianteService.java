@@ -1,6 +1,9 @@
 package es.juanito.institutos.estudiantes.services;
 
 import es.juanito.institutos.estudiantes.dto.EstudianteRequestDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface EstudianteService {
@@ -12,7 +15,7 @@ public interface EstudianteService {
      * @param nombre Nombre del estudiante para filtrar (opcional).
      * @return Lista de EstudianteRequestDto.
      */
-    List<EstudianteRequestDto> findAll(String codigoInstituto, String nombre);
+    Page<EstudianteRequestDto> findAll(String codigoInstituto, String nombre, Pageable pageable);
 
     /**
      * Busca estudiantes por nombre, ignorando mayúsculas/minúsculas.
@@ -26,7 +29,7 @@ public interface EstudianteService {
     /**
      * Busca un estudiante por su código único de estudiante.
      * Se renombra el parámetro y el propósito para mayor claridad.
-     * @param codigoEstudiante Código único del estudiante.
+     * #@param codigoEstudiante Código único del estudiante.
      * @return EstudianteRequestDto.
      */
     EstudianteRequestDto findByCodigoEstudiante(String codigoEstudiante);

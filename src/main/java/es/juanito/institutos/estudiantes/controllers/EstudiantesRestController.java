@@ -3,10 +3,15 @@ package es.juanito.institutos.estudiantes.controllers;
 import es.juanito.institutos.estudiantes.dto.EstudianteRequestDto;
 import es.juanito.institutos.estudiantes.exceptions.EstudianteNotFoundException;
 import es.juanito.institutos.estudiantes.services.EstudianteService;
+import es.juanito.institutos.pagination.utils.PaginationLinksUtils;
+import es.juanito.institutos.pagination.utils.PageResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +19,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,8 +29,8 @@ import java.util.Map;
  * Controlador de estudiantes del tipo RestController
  * Fijamos la ruta de acceso a este controlador
  * Usamos el servicio de estudiantes y lo inyectamos en el constructor con RequiredArgsConstructor
- *
- * @RequiredArgsConstructor es una anotación Lombok que nos permite inyectar dependencias basadas
+
+ * #@RequiredArgsConstructor es una anotación Lombok que nos permite inyectar dependencias basadas
  * en las anotaciones @Controller, @Service, @Component, etc.
  * y que se encuentren en nuestro contenedor de Spring
  * con solo declarar las dependencias como final ya que el constructor lo genera Lombok
@@ -36,28 +42,52 @@ import java.util.Map;
 public class EstudiantesRestController {
     // Servicio de estudiantes
     private final EstudianteService estudiantesService;
+    // AÑADIMOS la inyección de la utilidad de Links
+    private final PaginationLinksUtils paginationLinksUtils;
 
     /**
-     * Obtiene todos los estudiantes
+     * Obtiene todos los estudiantes con paginación y filtros opcionales.
      *
-     * @param codigoInstituto Código del instituto
-     * @param nombre Nombre del estudiante
-     * @return Lista de estudiantes
+     * #@param codigoInstituto Código del instituto (opcional)
+     * #@param nombre Nombre del estudiante (opcional)
+     * #@param "page" Número de página (default 0)
+     * #@param size Tamaño de la página (default 10)
+     * #@param sortBy Campo de ordenación (default nombre)
+     * #@param direction Dirección de ordenación (default asc)
+     * #@param uriBuilder Constructor de URI, inyectado por Spring.
+     * @return ResponseEntity con PageResponse<EstudianteRequestDto> en el cuerpo y Link Header.
      */
     @GetMapping()
-    public ResponseEntity<List<EstudianteRequestDto>> getAll(@RequestParam(required = false) String codigoInstituto,
-                                                              @RequestParam(required = false) String nombre) {
-        log.info("Buscando estudiantes por codigoInstituto={}, nombre={}", codigoInstituto, nombre);
-        return ResponseEntity.ok(estudiantesService.findAll(codigoInstituto, nombre));
-    }
+    public ResponseEntity<PageResponse<EstudianteRequestDto>> getAll(
+            @RequestParam(required = false) String codigoInstituto,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nombre") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction,
+            UriComponentsBuilder uriBuilder
+    ) {
+        log.info("Buscando estudiantes paginados con filtros. codigoInstituto={}, nombre={}, page={}, size={}", codigoInstituto, nombre, page, size);
 
-    /**
-     * Obtiene un estudiante por su id
-     *
-     * @param id del estudiante, se pasa como parámetro de la URL /{id}
-     * @return EstudianteResponseDto si existe
-     * @throws EstudianteNotFoundException si no existe el estudiante (404)
-     */
+        // 1. Preparamos el objeto Pageable
+        Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
+        PageRequest pageable = PageRequest.of(page, size, sort);
+
+        // 2. Llamamos al servicio (¡El servicio debe devolver Page<EstudianteRequestDto>!)
+        Page<EstudianteRequestDto> pageDto = estudiantesService.findAll(codigoInstituto, nombre, pageable);
+
+        // 3. Creamos el Link Header
+        String linkHeader = paginationLinksUtils.createLinkHeader(pageDto, uriBuilder);
+
+        // 4. Creamos el cuerpo de la respuesta usando tu PageResponse
+        PageResponse<EstudianteRequestDto> responseBody =
+                PageResponse.of(pageDto, sortBy, direction);
+
+        // 5. Devolvemos la respuesta con el Header y el cuerpo
+        return ResponseEntity.ok()
+                .header("Link", linkHeader) // <- ¡Aquí se añade el Header!
+                .body(responseBody);
+    }
     @GetMapping("/{id}")
     public ResponseEntity<EstudianteRequestDto> getById(@PathVariable Long id) {
         log.info("Buscando estudiante por id={}", id);
