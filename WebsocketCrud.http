@@ -1,0 +1,249 @@
+### ==================== CRUD COMPLETO: INSTITUTOS ====================
+
+### 1. GET – Obtener todos los institutos
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "GET",
+  "path": "/api/v1/institutos"
+}
+
+###
+
+### 2. GET – Buscar instituto por nombre
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "GET",
+  "path": "/api/v1/institutos",
+  "query": {"nombre":"Instituto Central"}
+}
+
+###
+
+### 3. GET – Buscar instituto por códigoInstituto
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "GET",
+  "path": "/api/v1/institutos",
+  "query": {"codigoInstituto":"INST001"}
+}
+
+###
+
+### 4. GET – Obtener instituto por ID
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "GET",
+  "path": "/api/v1/institutos/1"
+}
+
+###
+
+### 5. POST – Crear instituto correcto
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "POST",
+  "path": "/api/v1/institutos",
+  "body": {
+    "nombre": "Instituto Prueba Creación",
+    "ciudad": "Sevilla",
+    "direccion": "Calle Inventada 10",
+    "telefono": "123-45-67-89",
+    "email": "test.new@mail.com",
+    "numeroProfesores": 15,
+    "tipo": "Público",
+    "anioFundacion": "2000-05-15",
+    "codigoInstituto": "NUE-0033"
+  }
+}
+
+###
+
+### 6. POST – Crear instituto con errores
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "POST",
+  "path": "/api/v1/institutos",
+  "body": {
+    "nombre": "",
+    "ciudad": "Madrid",
+    "direccion": "Calle Falsa 123",
+    "telefono": "555443322",
+    "email": "correo_invalido@ejemplo.com",
+    "numeroProfesores": 0,
+    "tipo": "publico",
+    "anioFundacion": "2020-12-12",
+    "codigoInstituto": ""
+  }
+}
+
+###
+
+### 7. PUT – Actualización completa del instituto (ID 1)
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "PUT",
+  "path": "/api/v1/institutos/1",
+  "body": {
+    "nombre": "Instituto Central Actualizado",
+    "ciudad": "Barcelona",
+    "direccion": "Calle Central 100",
+    "telefono": "987-65-43-21",
+    "email": "central.actualizado@example.com",
+    "numeroProfesores": 40,
+    "tipo": "Concertado",
+    "anioFundacion": "1990-01-01",
+    "codigoInstituto": "INT-0011"
+  }
+}
+
+###
+
+### 8. PATCH – Actualización parcial del instituto (ID 2)
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "PATCH",
+  "path": "/api/v1/institutos/2",
+  "body": {
+    "direccion": "Calle Nueva 75 (Parcial)",
+    "telefono": "111-22-33-44"
+  }
+}
+
+###
+
+### 9. DELETE – Eliminación lógica (ID 2)
+WEBSOCKET ws://localhost:3000/ws/v1/institutos
+
+{
+  "method": "DELETE",
+  "path": "/api/v1/institutos/2"
+}
+
+### ==================== CRUD COMPLETO: ESTUDIANTES ====================
+
+### 1. GET – Obtener todos los estudiantes
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "GET",
+  "path": "/api/v1/estudiantes"
+}
+
+###
+
+### 2. GET – Buscar estudiante por DNI
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "GET",
+  "path": "/api/v1/estudiantes",
+  "query": {"dni":"11111111A"}
+}
+
+###
+
+### 3. GET – Buscar estudiantes por códigoInstituto
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "GET",
+  "path": "/api/v1/estudiantes",
+  "query": {"codigoInstituto":"INST001"}
+}
+
+###
+
+### 4. GET – Obtener estudiante por ID
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "GET",
+  "path": "/api/v1/estudiantes/3"
+}
+
+###
+
+### 5. POST – Crear nuevo estudiante correcto
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "POST",
+  "path": "/api/v1/estudiantes",
+  "body": {
+    "nombre": "Elena",
+    "apellidos": "García",
+    "email": "elena.g@nuevo.com",
+    "fechaNacimiento": "2005-11-20",
+    "dni": "55555555Z",
+    "codigoInstituto": "INT-0022"
+  }
+}
+
+###
+
+### 6. POST – Crear estudiante con errores
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "POST",
+  "path": "/api/v1/estudiantes",
+  "body": {
+    "nombre": "Fallo",
+    "apellidos": "Validacion",
+    "email": "invalido@error.com",
+    "fechaNacimiento": "2000-01-01",
+    "dni": "",
+    "codigoInstituto": "INT-0011"
+  }
+}
+
+###
+
+### 7. PUT – Actualización completa del estudiante (ID 1)
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "PUT",
+  "path": "/api/v1/estudiantes/1",
+  "body": {
+    "nombre": "Juan Actualizado",
+    "apellidos": "Diaz Nueva",
+    "email": "juan.nuevo@example.com",
+    "fechaNacimiento": "1995-01-01",
+    "dni": "11111111A",
+    "codigoInstituto": "INT002",
+    "isDeleted": false
+  }
+}
+
+###
+
+### 8. PATCH – Actualización parcial del estudiante (ID 2)
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+      "method": "PATCH",
+      "path": "/api/v1/estudiantes/2",
+      "body": {
+        "email": "ana.actualizado@mail.com",
+        "isDeleted": true
+      }
+}
+
+###
+
+### 9. DELETE – Eliminación lógica del estudiante (ID 3)
+WEBSOCKET ws://localhost:3000/ws/v1/estudiantes
+
+{
+  "method": "DELETE",
+  "path": "/api/v1/estudiantes/4"
+}

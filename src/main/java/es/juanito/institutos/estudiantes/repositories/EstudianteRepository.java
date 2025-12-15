@@ -17,13 +17,31 @@ import java.util.UUID;
 public interface EstudianteRepository extends JpaRepository<Estudiante, Long> {
 
     // ----------------------------------------------------------------------
-    // 🔑 METODOS DE UNICIDAD Y VALIDACION (Sin cambios)
+    // 🔑 METODOS DE UNICIDAD Y AUTENTICACIÓN (Username/Email/DNI)
     // ----------------------------------------------------------------------
 
+    /**
+     * Busca un estudiante por DNI o Email (util para validaciones de unicidad).
+     */
     Optional<Estudiante> findByDniOrEmail(String dni, String email);
+
+    /**
+     * Busca un estudiante por su email (útil para validaciones).
+     */
     Optional<Estudiante> findByEmail(String email);
+
+    /**
+     * Busca un estudiante por DNI (útil para validaciones).
+     */
     Optional<Estudiante> findByDniEqualsIgnoreCase(String dni);
 
+    // --- MÉTODOS DE BÚSQUEDA DEL SERVICIO DE AUTENTICACIÓN (CRUCIAL) ---
+
+    /**
+     * Busca un estudiante por username (necesario para el servicio de autenticación).
+     * NOTA: Este método debe existir para que AuthUsersServiceImpl funcione.
+     */
+    Optional<Estudiante> findByUsername(String username);
     // ----------------------------------------------------------------------
     // 🔎 METODOS DE BUSQUEDA SIN PAGINACION (Se mantienen)
     // ----------------------------------------------------------------------
@@ -79,5 +97,19 @@ public interface EstudianteRepository extends JpaRepository<Estudiante, Long> {
 
     @Modifying
     @Query("UPDATE Estudiante e SET e.isDeleted = true WHERE e.id = :id")
-    void updateIsDeletedToTrueById(@Param("id") Long id);
+    void updateIsDeletedToTrueById(@Param("id") Long id
+    );
+
+    // Método flexible para filtrar por username, email y estado de borrado con paginación
+    @Query("""
+       SELECT e FROM Estudiante e
+       WHERE (:username IS NULL OR LOWER(e.username) LIKE LOWER(CONCAT('%', :username, '%')))
+         AND (:email IS NULL OR LOWER(e.email) LIKE LOWER(CONCAT('%', :email, '%')))
+         AND (:isDeleted IS NULL OR e.isDeleted = :isDeleted)
+       """)
+    Page<Estudiante> findByFilters(@Param("username") String username,
+                                   @Param("email") String email,
+                                   @Param("isDeleted") Boolean isDeleted,
+                                   Pageable pageable);
+
 }

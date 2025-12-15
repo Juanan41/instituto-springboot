@@ -7,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class InstitutoApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(InstitutoApplication.class, args);
+        var ctx = SpringApplication.run(InstitutoApplication.class, args);
+        System.out.println("JWT Secret: " + ctx.getEnvironment().getProperty("jwt.secret.key"));
+        System.out.println("JWT Expiration: " + ctx.getEnvironment().getProperty("jwt.expiration.time"));
     }
-
 }

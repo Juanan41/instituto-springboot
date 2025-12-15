@@ -7,7 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.ColumnDefault;
 
-import java.time.LocalDate; // Necesario para anioFundacion
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,34 +16,39 @@ import java.util.UUID;
 @Builder
 @Getter
 @Setter
-@ToString(exclude = {"estudiantes"}) // Excluir la lista de estudiantes para evitar un bucle
 @AllArgsConstructor
-@NoArgsConstructor // Requerido por JPA
+@NoArgsConstructor
 @Entity
 @Table(name = "INSTITUTOS")
 public class Instituto {
 
     // ----------------------------------------------------------------------
-    //  Clave Primaria y Metadatos
+    //  Clave Primaria y UUID
     // ----------------------------------------------------------------------
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "uuid", unique = true, updatable = false, nullable = false, length = 36)
-    private UUID uuid = UUID.randomUUID();
+    // Columna UUID: ya estaba bien
+    @Column( unique = true, updatable = false, nullable = false, length = 36)
+    private UUID uuid;
+    @PrePersist
+    protected void onCreate() {
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID(); // Asigna el UUID si es nulo
+        }
+    }
 
     // ----------------------------------------------------------------------
     // 🏫 Datos de Negocio
     // ----------------------------------------------------------------------
 
-    @Column(name = "codigo_instituto", nullable = false, unique = true, length = 10)
+    // Columna codigo_instituto: ya estaba bien
+    @Column(name = "codigo_instituto", length = 20, unique = true, nullable = false)
     private String codigoInstituto;
 
     @Column(nullable = false, length = 100)
     private String nombre;
-
-    // --- CAMPOS AÑADIDOS PARA COMPATIBILIDAD CON MAPPER Y TESTS ---
 
     @Column(nullable = false, length = 150)
     private String direccion;
@@ -57,44 +62,42 @@ public class Instituto {
     @Column(nullable = false, length = 100, unique = true)
     private String email;
 
-    @Column(name = "numero_profesores")
+    // **FALLO 5 CORREGIDO**
+    @Column(name = "NUMERO_PROFESORES")
     private Integer numeroProfesores;
 
     @Column(length = 20)
-    private String tipo; // Ej: público, privado, concertado
+    private String tipo;
 
-    @Column(name = "anio_fundacion")
-    private LocalDate anioFundacion; // Usamos LocalDate
+
+    @Column(name = "anio_fundacion") // Usamos Snake Case en minúsculas
+    private LocalDate anioFundacion;
 
     // ----------------------------------------------------------------------
-    // 👥 Relación: Un Instituto a Muchos Estudiantes
+    // 👥 Relación
     // ----------------------------------------------------------------------
-
-    // En es.juanito.institutos.institutos.models.Instituto.java
-
-    // En Instituto.java (La entidad que contiene la colección)
 
     @OneToMany(mappedBy = "instituto",
-            fetch = FetchType.LAZY, //  CRÍTICO: Cambiar a LAZY
+            fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     @Builder.Default
     private Set<Estudiante> estudiantes = new HashSet<>();
 
     // ----------------------------------------------------------------------
-    // 🕒 Metadatos de Auditoría y Borrado Lógico
+    // 🕒 Metadatos de Auditoría y Borrado Lógico (FALLOS 2, 3, 4 CORREGIDOS)
     // ----------------------------------------------------------------------
 
     @CreationTimestamp
-    @Column(updatable = false, nullable = false)
+    @Column( updatable = false, nullable = false) // **FALLO 2 CORREGIDO**
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
+    @Column( nullable = false) // **FALLO 3 CORREGIDO**
     private LocalDateTime updatedAt;
 
     @ColumnDefault("FALSE")
-    @Column(nullable = false)
+    @Column( nullable = false) // **FALLO 4 CORREGIDO**
     @Builder.Default
     private Boolean isDeleted = false;
 

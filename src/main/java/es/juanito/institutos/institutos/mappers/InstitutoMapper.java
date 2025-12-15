@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set; // Importar Set
 import java.util.UUID;
-import java.util.stream.Collectors; // Importar Collectors
 
 @Component
 public class InstitutoMapper {

@@ -35,7 +35,7 @@ class InstitutosRepositoryTest {
             // .numeroEstudiantes(2458) // Campo eliminado de la entidad
             .numeroProfesores(120)
             .tipo("concertado")
-            .anioFundacion(LocalDate.of(1854,1,1))
+            .anioFundacion(LocalDate.of(2000,1,1))
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now()) // CORREGIDO: updateAt -> updatedAt
             .uuid(UUID.fromString("51af0a67-ff4b-42f3-8bc3-9db6531d4985"))
@@ -51,7 +51,7 @@ class InstitutosRepositoryTest {
             // .numeroEstudiantes(888) // Campo eliminado de la entidad
             .numeroProfesores(46)
             .tipo("privado")
-            .anioFundacion(LocalDate.of(2000,12,31))
+            .anioFundacion(LocalDate.of(2010,12,11))
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now()) // CORREGIDO: updateAt -> updatedAt
             .uuid(UUID.fromString("8e7780f9-0771-4ff8-abdc-6e93f771f3c7"))
@@ -64,8 +64,8 @@ class InstitutosRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        entityManager.merge(instituto1);
-        entityManager.merge(instituto2);
+        entityManager.persist(instituto1);
+        entityManager.persist(instituto2);
         entityManager.flush();
     }
 
@@ -139,9 +139,7 @@ class InstitutosRepositoryTest {
     void findById_nonExistingId_returnsEmptyOptional() {
         // Arrange
         Long id = 4L;
-
-        // ✅ CLAVE: Instruir al mock repositorio a devolver un Optional vacío
-        when(repositorio.findById(id)).thenReturn(Optional.empty());
+        // ELIMINAMOS: when(repositorio.findById(id)).thenReturn(Optional.empty());
 
         // Act
         Optional<Instituto> optionalInstituto = repositorio.findById(id);
@@ -152,8 +150,7 @@ class InstitutosRepositoryTest {
                 () -> assertTrue(optionalInstituto.isEmpty())
         );
 
-        // Verify (Opcional, pero buena práctica)
-        verify(repositorio, times(1)).findById(id);
+        // ELIMINAMOS: verify(repositorio, times(1)).findById(id);
     }
     @Test
     void findByUuid_existingId_returnsOptionalWithInstituto() {
@@ -206,19 +203,20 @@ class InstitutosRepositoryTest {
         assertFalse(exists);
     }
 
+    // Línea 207
     @Test
     void save_notExisting() {
         Instituto instituto = Instituto.builder()
                 .nombre("Instituto Simancas")
-                .codigoInstituto("SIM-999") // Añadido campo clave
+                .codigoInstituto("SIM-999")
                 .ciudad("Toledo")
                 .direccion("Camino de Yepes")
                 .telefono("999-88-77-66")
                 .email("Simancas@Email.com")
-                // .numeroEstudiantes(987) // Campo eliminado
                 .numeroProfesores(45)
                 .tipo("Concertado")
-                .anioFundacion(LocalDate.of(2025, 10, 31))
+                .anioFundacion(LocalDate.of(2020, 10, 31))
+                .uuid(UUID.randomUUID()) // ¡AÑADIR UUID AQUÍ!
                 .build();
 
         Instituto savedInstituto = repositorio.save(instituto);
@@ -232,11 +230,26 @@ class InstitutosRepositoryTest {
 
     @Test
     void save_butExisting() {
-        Instituto tarjetaExistente = instituto1;
+        // Creamos una COPIA manual para intentar un INSERT con el mismo CÓDIGO ÚNICO (ABC-1234)
+        Instituto duplicado = Instituto.builder()
+                .nombre(instituto1.getNombre())
+                .codigoInstituto(instituto1.getCodigoInstituto()) // Mantenemos el código duplicado
+                .direccion(instituto1.getDireccion())
+                .ciudad(instituto1.getCiudad())
+                .telefono(instituto1.getTelefono())
+                .email(instituto1.getEmail())
+                .numeroProfesores(instituto1.getNumeroProfesores())
+                .tipo(instituto1.getTipo())
+                .anioFundacion(instituto1.getAnioFundacion())
+                // Establecemos ID a null para forzar INSERT
+                .id(null)
+                // Generamos un UUID nuevo para que no falle por UUID duplicado
+                .uuid(UUID.randomUUID())
+                .build();
 
-        // Esperamos que falle al intentar guardar un Instituto con el mismo código único (UUID/ID)
+        // Esperamos que falle al intentar guardar por la duplicidad del codigoInstituto
         assertThrows(DataIntegrityViolationException.class,
-                () -> repositorio.save(tarjetaExistente));
+                () -> repositorio.save(duplicado));
     }
 
     @Test

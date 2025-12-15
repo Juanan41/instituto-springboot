@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 // Mapea a 404 Not Found
 @ResponseStatus(HttpStatus.NOT_FOUND)
-public class EstudianteNotFoundException extends EstudianteException {
+public class EstudianteNotFoundException extends RuntimeException {
 
     // Constructor para buscar por ID (el más usado en el servicio)
     public EstudianteNotFoundException(Long id) {

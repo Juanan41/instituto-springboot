@@ -24,6 +24,16 @@ public class EstudianteRequestDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isDeleted;
+    // --- CAMPOS DE AUTENTICACIÓN (NUEVOS) ---
+
+    @NotBlank(message = "El nombre de usuario es obligatorio")
+    @Length(min = 4, max = 50, message = "El username debe tener entre 4 y 50 caracteres")
+    private String username;
+
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Length(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+    // NOTA: Para POST/Creación, se recomienda tener un campo 'passwordComprobacion'
+    private String password;
 
     // --- Campos de Búsqueda/Relación ---
     @NotBlank(message = "El código del instituto no puede estar vacío")

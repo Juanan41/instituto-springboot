@@ -1,95 +1,100 @@
 package es.juanito.institutos.estudiantes.mappers;
 
+import es.juanito.institutos.estudiantes.dto.EstudianteInfoResponseDto; // DTO de Salida Detallado
 import es.juanito.institutos.estudiantes.dto.EstudianteRequestDto;
+import es.juanito.institutos.estudiantes.dto.EstudianteResponseDto; // DTO de Salida Resumido
 import es.juanito.institutos.estudiantes.models.Estudiante;
 import es.juanito.institutos.institutos.models.Instituto;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
 public class EstudianteMapper {
 
     // --- 1. Mapeo de Creación (DTO -> Entidad) ---
-
+    // El password y roles se asignan en el servicio
     public Estudiante toEstudiante(EstudianteRequestDto dto, Instituto instituto) {
         return Estudiante.builder()
-                .id(null) // ID es null y se genera por la BD
+                .id(null)
+                .username(dto.getUsername()) // AÑADIDO: Campo de seguridad
+                .password(dto.getPassword()) // Se pasa sin codificar (el servicio lo codificará)
                 .nombre(dto.getNombre())
                 .apellidos(dto.getApellidos())
                 .email(dto.getEmail())
-                .fechaNacimiento(dto.getFechaNacimiento())
                 .dni(dto.getDni())
-                .isDeleted(dto.getIsDeleted() != null ? dto.getIsDeleted() : false) // Mapeo de isDeleted
-                .instituto(instituto) // Asignamos la relación (FK)
-                // Omitimos UUID, createdAt, updatedAt para que los gestione la Entidad/Hibernate
+                .fechaNacimiento(dto.getFechaNacimiento())
+                .instituto(instituto)
+                .isDeleted(false) // Siempre false en la creación
                 .build();
     }
 
     // --- 2. Mapeo de Actualización (DTO + Entidad Actual -> Entidad Actualizada) ---
 
-    /**
-     * Mapea un DTO de petición a una entidad Estudiante existente.
-     * Requiere la entidad Instituto NUEVA (o la misma) para actualizar la FK.
-     */
-    // 🛑 CORRECCIÓN DE FALLO 1: La firma debe incluir el parámetro 'Instituto nuevoInstituto'.
+    // Retorna la entidad existente para que el servicio la guarde.
     public Estudiante toEstudiante(EstudianteRequestDto dto, Estudiante estudiante, Instituto nuevoInstituto) {
 
-        return Estudiante.builder()
-                .id(estudiante.getId())
-                .uuid(estudiante.getUuid()) // Preservamos el UUID
-                .createdAt(estudiante.getCreatedAt()) // Preservamos la fecha de creación
-                .updatedAt(LocalDateTime.now()) // Actualización manual
+        // No usamos el constructor builder aquí, sino los setters en la entidad existente
+        if (dto.getNombre() != null) estudiante.setNombre(dto.getNombre());
+        if (dto.getApellidos() != null) estudiante.setApellidos(dto.getApellidos());
+        if (dto.getEmail() != null) estudiante.setEmail(dto.getEmail());
+        if (dto.getUsername() != null) estudiante.setUsername(dto.getUsername()); // Actualizar username
+        if (dto.getDni() != null) estudiante.setDni(dto.getDni());
+        if (dto.getFechaNacimiento() != null) estudiante.setFechaNacimiento(dto.getFechaNacimiento());
+        if (dto.getIsDeleted() != null) estudiante.setIsDeleted(dto.getIsDeleted());
 
-                // Mapeo de Campos de Negocio (Lógica de no nulos)
-                .nombre(dto.getNombre() != null ? dto.getNombre() : estudiante.getNombre())
-                .apellidos(dto.getApellidos() != null ? dto.getApellidos() : estudiante.getApellidos())
-                .email(dto.getEmail() != null ? dto.getEmail() : estudiante.getEmail())
-                .fechaNacimiento(dto.getFechaNacimiento() != null ? dto.getFechaNacimiento() : estudiante.getFechaNacimiento())
-                .dni(dto.getDni() != null ? dto.getDni() : estudiante.getDni())
+        // Si el DTO trae password (no nulo/vacío), el servicio lo codificará y lo asignará.
 
-                // Actualización de Metadatos y Relación
-                .isDeleted(dto.getIsDeleted() != null ? dto.getIsDeleted() : estudiante.getIsDeleted())
-                // 🛑 CORRECCIÓN DE FALLO 2: Asignar la relación Instituto (Clave Foránea)
-                .instituto(nuevoInstituto)
-                .build();
+        // El instituto (FK) siempre se actualiza si viene en el DTO (porque lo validamos)
+        estudiante.setInstituto(nuevoInstituto);
+
+        return estudiante;
     }
 
-    // --- 3. Mapeo de Salida Individual (Entidad -> DTO Único) ---
+    // --- 3. Mapeo de Salida Individual (Entidad -> DTO Resumido) ---
 
-    /**
-     * Mapea una única entidad a EstudianteRequestDto (para findById, save, update).
-     * 🛑 CORRECCIÓN DE FALLO 3: Este método es requerido por el método toRequestDtoList.
-     */
-    public EstudianteRequestDto toEstudianteRequestDto(Estudiante estudiante) {
-        return EstudianteRequestDto.builder()
-                // Mapeando metadatos (Asumiendo que EstudianteRequestDto tiene id, uuid, createdAt, etc.)
+    // Para listas y respuestas de SAVE/UPDATE
+    public EstudianteResponseDto toResponseDto(Estudiante estudiante) {
+        return EstudianteResponseDto.builder()
                 .id(estudiante.getId())
                 .uuid(estudiante.getUuid())
-                .createdAt(estudiante.getCreatedAt())
-                .updatedAt(estudiante.getUpdatedAt())
-
-                // Mapeando campos de negocio
+                .username(estudiante.getUsername())
+                .email(estudiante.getEmail())
                 .nombre(estudiante.getNombre())
                 .apellidos(estudiante.getApellidos())
-                .email(estudiante.getEmail())
-                .fechaNacimiento(estudiante.getFechaNacimiento())
                 .dni(estudiante.getDni())
-                // Obtenemos el código del Instituto desde la relación para el DTO
-                .codigoInstituto(estudiante.getInstituto() != null ? estudiante.getInstituto().getCodigoInstituto() : null)
+                .fechaNacimiento(estudiante.getFechaNacimiento())
                 .isDeleted(estudiante.getIsDeleted())
+                .institutoId(estudiante.getInstituto() != null ? estudiante.getInstituto().getId() : null)
                 .build();
     }
 
-    // --- 4. Mapeo de Salida de Lista (Lista de Entidades -> Lista de DTO Único) ---
+    // --- 4. Mapeo de Salida Individual (Entidad -> DTO Detallado) ---
 
-    public List<EstudianteRequestDto> toRequestDtoList(List<Estudiante> estudiantes) {
+    // Para findById y /me/profile
+    public EstudianteInfoResponseDto toInfoResponseDto(Estudiante estudiante) {
+        return EstudianteInfoResponseDto.builder()
+                .id(estudiante.getId())
+                .uuid(estudiante.getUuid())
+                .username(estudiante.getUsername())
+                .email(estudiante.getEmail())
+                .nombre(estudiante.getNombre())
+                .apellidos(estudiante.getApellidos())
+                .dni(estudiante.getDni())
+                .fechaNacimiento(estudiante.getFechaNacimiento())
+                .isDeleted(estudiante.getIsDeleted())
+                .createdAt(estudiante.getCreatedAt())
+                .updatedAt(estudiante.getUpdatedAt())
+                .institutoId(estudiante.getInstituto() != null ? estudiante.getInstituto().getId() : null)
+                .build();
+    }
+
+    // --- 5. Mapeo de Salida de Lista (Lista de Entidades -> Lista de DTOs Resumidos) ---
+
+    public List<EstudianteResponseDto> toResponseDtoList(List<Estudiante> estudiantes) {
         return estudiantes.stream()
-                // Usa el método que mapea una sola entidad
-                .map(this::toEstudianteRequestDto)
+                .map(this::toResponseDto)
                 .collect(Collectors.toList());
     }
 }
