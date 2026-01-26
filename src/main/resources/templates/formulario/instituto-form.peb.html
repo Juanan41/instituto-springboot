@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="{{ lang | default('es') }}">
+
+{% include "fragments/head" %}
+
+<body class="bg-light">
+{% include "fragments/navbar" %}
+
+<div class="container py-4">
+
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+
+        <!-- Header -->
+        <div class="card-header bg-success text-white rounded-top-4 d-flex align-items-center gap-2">
+            <i class="bi bi-building-add"></i>
+            <b>
+                {% if instituto is not null and instituto.id is not null %}
+                ✏️ {{ "institute.form.title.edit" | message }}
+                {% else %}
+                ➕ {{ "institute.form.title.create" | message }}
+                {% endif %}
+            </b>
+        </div>
+
+        <div class="card-body p-4">
+
+            <form method="post"
+                  action="{% if instituto is not null and instituto.id is not null %}/public/institutos/editar/{{ instituto.id }}{% else %}/public/institutos/nuevo{% endif %}">
+
+                <!-- Mantener idioma -->
+                <input type="hidden" name="lang" value="{{ lang | default('es') }}">
+
+                {% if instituto is not null and instituto.id is not null %}
+                <input type="hidden" name="id" value="{{ instituto.id }}">
+                {% endif %}
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ "institute.field.nombre" | message }}</label>
+                        <input class="form-control"
+                               type="text"
+                               name="nombre"
+                               value="{{ instituto.nombre | default('') }}"
+                               placeholder="{{ 'institute.placeholder.nombre' | message }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ "institute.field.ciudad" | message }}</label>
+                        <input class="form-control"
+                               type="text"
+                               name="ciudad"
+                               value="{{ instituto.ciudad | default('') }}"
+                               placeholder="{{ 'institute.placeholder.ciudad' | message }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ "institute.field.codigo" | message }}</label>
+                        <input class="form-control"
+                               type="text"
+                               name="codigoInstituto"
+                               value="{{ instituto.codigoInstituto | default('') }}"
+                               placeholder="{{ 'institute.placeholder.codigo' | message }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">{{ "institute.field.direccion" | message }}</label>
+                        <input class="form-control"
+                               type="text"
+                               name="direccion"
+                               value="{{ instituto.direccion | default('') }}"
+                               placeholder="{{ 'institute.placeholder.direccion' | message }}">
+                    </div>
+
+                </div>
+
+                <!-- BOTONES -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i> {{ "btn.save" | message }}
+                    </button>
+
+                    <a href="/public?lang={{ lang | default('es') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> {{ "btn.back" | message }}
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% include "fragments/scripts" %}
+</body>
+</html>

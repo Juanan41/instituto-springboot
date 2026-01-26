@@ -1,0 +1,246 @@
+# ==========================================================================
+# ESQUEMA GRAPHQL PARA INSTITUTOS Y ESTUDIANTES
+# ==========================================================================
+# Este esquema permite consultar:
+# - Institutos con su lista de estudiantes
+# - Estudiantes con su instituto
+#
+# OBJETIVO EDUCATIVO:
+# Aprender a estructurar un esquema GraphQL con relaciones OneToMany y ManyToOne
+# similar a como se hace en Spring Boot con JPA (Instituto -> Estudiantes)
+#
+# QUE ES UN ESQUEMA GRAPHQL:
+# Un esquema GraphQL define formalmente:
+# - Tipos de datos
+# - Operaciones de lectura (Query)
+# - Operaciones de escritura (Mutation)
+# - Relaciones entre tipos
+#
+# COMPONENTES CLAVE:
+# 1. Types: objetos que define la API
+# 2. Query: lectura
+# 3. Mutation: escritura
+# 4. Relaciones: conexiones entre entidades
+#
+# NOTACION RAPIDA:
+# - Obligatorio: String!
+# - Opcional: String
+# - Lista: [Tipo!]!
+# ==========================================================================
+
+
+# --- CONSULTAS DISPONIBLES (LECTURA) ---
+type Query {
+
+    # ============================================================
+    # CONSULTAS DE INSTITUTOS
+    # ============================================================
+
+    # Devuelve todos los institutos NO eliminados (isDeleted = false)
+    institutos: [Instituto!]!
+
+    # Devuelve un instituto por ID (Long)
+    institutoById(id: ID!): Instituto
+
+    # Devuelve un instituto por UUID (String)
+    institutoByUuid(uuid: String!): Instituto
+
+    # Devuelve institutos filtrando por ciudad
+    institutosByCiudad(ciudad: String!): [Instituto!]!
+
+    # Devuelve institutos filtrando por nombre
+    institutosByNombre(nombre: String!): [Instituto!]!
+
+    # Devuelve institutos filtrando por ciudad Y nombre
+    institutosByCiudadAndNombre(ciudad: String!, nombre: String!): [Instituto!]!
+
+
+
+    # ============================================================
+    # CONSULTAS DE ESTUDIANTES
+    # ============================================================
+
+    # Devuelve todos los estudiantes NO eliminados (isDeleted = false)
+    estudiantes: [Estudiante!]!
+
+    # Devuelve un estudiante por ID (Long)
+    estudianteById(id: ID!): Estudiante
+
+    # Devuelve estudiantes filtrando por nombre
+    estudiantesByNombre(nombre: String!): [Estudiante!]!
+
+    # Devuelve estudiantes de un instituto concreto
+    estudiantesByInstitutoId(institutoId: ID!): [Estudiante!]!
+}
+
+
+# ==========================================================================
+# TIPOS PRINCIPALES (ENTIDADES)
+# ==========================================================================
+
+
+# --- TIPO INSTITUTO ---
+# Representa un instituto con sus atributos y su lista de estudiantes
+type Instituto {
+    id: ID!                   # Identificador autoincremental (Long en Java)
+    uuid: String!             # UUID unico (para APIs externas)
+    nombre: String!           # Nombre del instituto
+    ciudad: String!           # Ciudad donde está el instituto
+    createdAt: String!        # Fecha de creacion ISO 8601
+    updatedAt: String!        # Fecha de actualizacion ISO 8601
+    isDeleted: Boolean!       # Borrado logico
+
+    # Relación: un Instituto tiene muchos estudiantes
+    estudiantes: [Estudiante!]!
+}
+
+
+# --- TIPO ESTUDIANTE ---
+# Representa un estudiante y su relación con instituto
+type Estudiante {
+    id: ID!                   # Identificador autoincremental (Long en Java)
+    nombre: String!           # Nombre completo del estudiante
+    email: String!            # Email del estudiante (si lo tienes)
+    edad: Int                 # Edad (opcional)
+    createdAt: String!        # Fecha de creacion ISO 8601
+    updatedAt: String!        # Fecha de actualizacion ISO 8601
+    isDeleted: Boolean!       # Borrado logico
+
+    # Relación: un estudiante pertenece a un instituto
+    instituto: Instituto!
+}
+
+
+# ==========================================================================
+# INPUTS PARA MUTACIONES (CREAR / ACTUALIZAR)
+# ==========================================================================
+# Los inputs se usan para pasar datos como objetos.
+# Ejemplo: createInstituto(input: InstitutoCreateInput!)
+# ==========================================================================
+
+input InstitutoCreateInput {
+    nombre: String!
+    ciudad: String!
+}
+
+input InstitutoUpdateInput {
+    nombre: String
+    ciudad: String
+}
+
+input EstudianteCreateInput {
+    nombre: String!
+    email: String!
+    edad: Int
+    institutoId: ID!
+}
+
+input EstudianteUpdateInput {
+    nombre: String
+    email: String
+    edad: Int
+}
+
+
+# ==========================================================================
+# MUTACIONES (ESCRITURA)
+# ==========================================================================
+# Aquí se definen acciones tipo POST/PUT/PATCH/DELETE
+# ==========================================================================
+
+type Mutation {
+
+    # ============================================================
+    # INSTITUTOS
+    # ============================================================
+
+    # Crear instituto
+    createInstituto(input: InstitutoCreateInput!): Instituto!
+
+    # Actualizar instituto por ID
+    updateInstituto(id: ID!, input: InstitutoUpdateInput!): Instituto!
+
+    # Borrado lógico instituto
+    deleteInstituto(id: ID!): Boolean!
+
+
+
+    # ============================================================
+    # ESTUDIANTES
+    # ============================================================
+
+    # Crear estudiante
+    createEstudiante(input: EstudianteCreateInput!): Estudiante!
+
+    # Actualizar estudiante
+    updateEstudiante(id: ID!, input: EstudianteUpdateInput!): Estudiante!
+
+    # Borrado lógico estudiante
+    deleteEstudiante(id: ID!): Boolean!
+}
+
+
+# ==========================================================================
+# EJEMPLOS DE CONSULTAS PARA EL ALUMNADO
+# ==========================================================================
+
+# 1) OBTENER TODOS LOS INSTITUTOS CON SUS ESTUDIANTES
+# query {
+#   institutos {
+#     id
+#     nombre
+#     ciudad
+#     estudiantes {
+#       id
+#       nombre
+#       email
+#     }
+#   }
+# }
+
+# 2) OBTENER UN INSTITUTO POR ID
+# query {
+#   institutoById(id: "1") {
+#     nombre
+#     ciudad
+#     estudiantes {
+#       nombre
+#     }
+#   }
+# }
+
+# 3) OBTENER UN INSTITUTO POR UUID
+# query {
+#   institutoByUuid(uuid: "b1f4c20e-2e84-4e0f-9f55-123456789abc") {
+#     nombre
+#     ciudad
+#   }
+# }
+
+# 4) OBTENER UN ESTUDIANTE CON SU INSTITUTO
+# query {
+#   estudianteById(id: "5") {
+#     nombre
+#     email
+#     instituto {
+#       id
+#       nombre
+#       ciudad
+#     }
+#   }
+# }
+
+# 5) FILTRAR INSTITUTOS POR CIUDAD
+# query {
+#   institutosByCiudad(ciudad: "Madrid") {
+#     nombre
+#   }
+# }
+
+# 6) FILTRAR ESTUDIANTES POR INSTITUTO
+# query {
+#   estudiantesByInstitutoId(institutoId: "1") {
+#     nombre
+#     email
+#   }
+# }

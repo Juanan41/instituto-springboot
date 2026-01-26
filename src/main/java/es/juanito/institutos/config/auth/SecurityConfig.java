@@ -1,9 +1,7 @@
 package es.juanito.institutos.config.auth;
 
-import es.juanito.institutos.config.auth.SecurityConfig;
-import es.juanito.institutos.auth.services.users.AuthUsersService;
-import es.juanito.institutos.auth.services.users.AuthUsersServiceImpl; // Usamos la implementación del servicio
-import es.juanito.institutos.users.exceptions.UserNotFound;
+import es.juanito.institutos.rest.auth.services.users.AuthUsersServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,49 +19,83 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Configuración de seguridad principal para la aplicación.
- * Define el filtro JWT, las reglas de acceso y los beans de seguridad.
- */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Permite @PreAuthorize
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
-
-    // Inyectamos el servicio de usuarios para que Spring sepa dónde buscar usuarios
     private final AuthUsersServiceImpl userDetailsService;
 
-    /**
-     * Define la cadena de filtros de seguridad.
-     * Configura el manejo de sesiones como STATELESS y añade el filtro JWT.
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorize -> authorize
-                        // Rutas públicas: Autenticación (login, registro)
+
+                // ✅ EVITAR REDIRECCIONES A LOGIN
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+
+                .authorizeHttpRequests(auth -> auth
+
+                        // ✅ WEB PUBLICA
+                        .requestMatchers(
+                                "/", "/index",
+
+                                // ✅ auth web (login/registro/logout)
+                                "/public/auth/**",
+
+                                // ✅ zona pública
+                                "/public", "/public/", "/public/**",
+
+                                "/error",
+                                "/favicon.ico",
+                                "/css/**", "/js/**", "/images/**", "/webjars/**"
+                        ).permitAll()
+
+                        // ✅ Swagger
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // ✅ H2
+                        .requestMatchers("/h2-console/**").permitAll()
+
+                        // ✅ AUTH API
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        // Rutas privadas: Todas las demás requieren autenticación
+
+                        // 🔒 RESTO PRIVADO
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // REST API, sin sesiones
+
+                // ✅ IMPORTANTE: permitir sesión para WEB (login/logout navbar)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
+
                 .authenticationProvider(authenticationProvider())
-                // Añadimos el filtro JWT antes del filtro de usuario/contraseña de Spring
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // ✅ JWT filter
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+                // ✅ NUNCA LOGIN HTML, DEVOLVER 401/403 en endpoints protegidos
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN))
+                );
+
+        // ✅ H2 console
+        http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
 
-    /**
-     * Define el proveedor de autenticación:
-     * Indica a Spring que use nuestro UserDetailsService y el PasswordEncoder.
-     */
+    // =====================================================
+    // ✅ Authentication Provider
+    // =====================================================
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -72,17 +104,17 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    /**
-     * Define el codificador de contraseñas (BCrypt es el estándar actual).
-     */
+    // =====================================================
+    // ✅ Password Encoder
+    // =====================================================
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Define el gestor de autenticación, necesario para el proceso de signIn.
-     */
+    // =====================================================
+    // ✅ Authentication Manager
+    // =====================================================
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

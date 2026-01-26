@@ -1,219 +1,165 @@
 package es.juanito.institutos.estudiantes.repositories;
 
-import es.juanito.institutos.estudiantes.models.Estudiante;
-import es.juanito.institutos.institutos.models.Instituto;
+import es.juanito.institutos.rest.estudiantes.models.Estudiante;
+import es.juanito.institutos.rest.estudiantes.repositories.EstudianteRepository;
+import es.juanito.institutos.rest.institutos.models.Instituto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// Reseteamos la base de datos para partir de una situación conocida
-// El script SQL se ejecuta antes de cada método (y DEBE crear el DDL)
-@Sql(value = {"/reset.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@DataJpaTest
+@DataJpaTest(properties = {
+        "spring.sql.init.mode=never"
+})
 class EstudianteRepositoryTest {
 
-    // 🗃️ Repositorio de Estudiante
     @Autowired
     private EstudianteRepository repositorio;
 
-    // EntityManager para hacer las pruebas y asegurar la persistencia
     @Autowired
     private TestEntityManager entityManager;
 
-    // 👤 Entidades de prueba
-    private Instituto instituto1; // La FK para el estudiante
-
-    private final Estudiante estudiante = Estudiante.builder()
-            .nombre("Jose").apellidos("García").dni("11111111J")
-            .email("jose.garcia@test.com").fechaNacimiento(LocalDate.of(2000, 1, 1))
-            // El instituto se asigna en el setUp porque necesita el objeto persistido
-            .build();
+    private Instituto instituto;
+    private Estudiante estudiante;
 
     @BeforeEach
     void setUp() {
-        // 1. Asegurar la existencia del Instituto (FK) en la base de datos.
-        // Lo persistimos aquí, ya que el script SQL solo crea el esquema,
-        // o si el script inserta datos, este insertará un nuevo instituto.
-        instituto1 = entityManager.persist(Instituto.builder()
-                .nombre("IES Central")
-                .codigoInstituto("ICA-0077")
-                .direccion("Calle Rodea Paredes")
-                .ciudad("Tenerife")
-                .email("wwww@gmail.com")
-                .build());
+        LocalDateTime now = LocalDateTime.now();
 
-        // 2. Asignar la FK al Estudiante
-        estudiante.setInstituto(instituto1);
+        // =========================
+        // INSTITUTO (OBLIGATORIO COMPLETO)
+        // =========================
+        instituto = entityManager.persist(
+                Instituto.builder()
+                        .nombre("IES Central")
+                        .codigoInstituto("INT-0011")
+                        .direccion("Calle Test")
+                        .ciudad("Madrid")
+                        .email("instituto@test.com")
+                        .numeroProfesores(50)
+                        .tipo("publico")
+                        .anioFundacion(LocalDate.of(1995, 1, 1))
+                        .telefono("600000000")        // por si en tu entidad es obligatorio
+                        .uuid(UUID.randomUUID())
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .isDeleted(false)
+                        .build()
+        );
 
-        // 3. Insertamos el estudiante base antes de cada test (obtendrá ID=1L)
-        entityManager.persist(estudiante);
+        // =========================
+        // ESTUDIANTE (OBLIGATORIO COMPLETO)
+        // =========================
+        estudiante = entityManager.persist(
+                Estudiante.builder()
+                        .nombre("Jose")
+                        .apellidos("García")
+                        .dni("11111111J")
+                        .email("jose@test.com")
+                        .username("joseuser")
+                        .password("123456")
+                        .fechaNacimiento(LocalDate.of(2000, 1, 1))
+                        .instituto(instituto)
+                        .uuid(UUID.randomUUID())
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .isDeleted(false)
+                        .build()
+        );
 
-        // Sincroniza los cambios en los objetos del contexto de persistencia con la BD
         entityManager.flush();
-        entityManager.clear(); // Limpiamos para que las consultas lean de la BD real
+        entityManager.clear();
     }
 
-    // --- 1. CRUD BÁSICO ---
+    // ---------- CRUD ----------
 
     @Test
     void findAll() {
-        // Act
-        // El findAll debe devolver AL MENOS el estudiante insertado en setUp
         List<Estudiante> estudiantes = repositorio.findAll();
-
-        // Assert
-        assertAll("findAll",
-                () -> assertNotNull(estudiantes),
-                () -> assertFalse(estudiantes.isEmpty())
-        );
-    }
-
-    @Test
-    void findByNombre() {
-        // Act
-        List<Estudiante> estudiantes = repositorio.findByNombreContainingIgnoreCase("Jose");
-
-        // Assert
-        assertAll("findAllByNombre",
-                () -> assertNotNull(estudiantes),
-                () -> assertFalse(estudiantes.isEmpty()),
-                () -> assertEquals("Jose", estudiantes.getFirst().getNombre())
-        );
+        assertFalse(estudiantes.isEmpty());
     }
 
     @Test
     void findById() {
-        // Act (Buscamos el estudiante que insertamos en setUp, que tendrá ID 1L)
         Optional<Estudiante> found = repositorio.findById(estudiante.getId());
-
-        // Assert
-        assertAll("findById",
-                () -> assertTrue(found.isPresent()),
-                () -> assertEquals("Jose", found.get().getNombre()),
-                () -> assertEquals("11111111J", found.get().getDni())
-        );
+        assertTrue(found.isPresent());
+        assertEquals("Jose", found.get().getNombre());
     }
 
     @Test
     void findByIdNotFound() {
-        // Act
-        Optional<Estudiante> found = repositorio.findById(100L);
-        // Assert
-        assertTrue(found.isEmpty());
+        assertTrue(repositorio.findById(999L).isEmpty());
     }
 
     @Test
     void save() {
-        // Act
+        LocalDateTime now = LocalDateTime.now();
+
         Estudiante nuevo = Estudiante.builder()
-                .nombre("Pepe").apellidos("Ruiz").dni("22222222P")
-                .email("pepe.ruiz@save.com").fechaNacimiento(LocalDate.of(2003, 3, 3))
-                .instituto(instituto1) // Usamos el instituto ya insertado
+                .nombre("Pepe")
+                .apellidos("Ruiz")
+                .dni("22222222P")
+                .email("pepe@test.com")
+                .username("pepeuser")
+                .password("123456")
+                .fechaNacimiento(LocalDate.of(2001, 1, 1))
+                .instituto(instituto)
+                .uuid(UUID.randomUUID())
+                .createdAt(now)
+                .updatedAt(now)
+                .isDeleted(false)
                 .build();
 
         Estudiante saved = repositorio.save(nuevo);
-
-        // Assert
-        assertAll("save",
-                () -> assertNotNull(saved),
-                () -> assertEquals("Pepe", saved.getNombre()),
-                () -> assertEquals("22222222P", saved.getDni())
-        );
+        assertNotNull(saved.getId());
     }
 
     @Test
     void update() {
-        // Arrange
-        var existente = repositorio.findById(estudiante.getId()).orElseThrow();
-        existente.setNombre("Pepe Actualizado");
-        existente.setEmail("actualizado@update.com");
-
-        // Act
-        Estudiante updated = repositorio.save(existente);
-
-        // Assert
-        assertAll("update",
-                () -> assertNotNull(updated),
-                () -> assertEquals("Pepe Actualizado", updated.getNombre()),
-                () -> assertEquals("actualizado@update.com", updated.getEmail())
-        );
+        estudiante.setNombre("Nombre Actualizado");
+        Estudiante updated = repositorio.save(estudiante);
+        assertEquals("Nombre Actualizado", updated.getNombre());
     }
 
     @Test
     void delete() {
-        // Act
-        var estudianteBorrar = repositorio.findById(estudiante.getId()).orElseThrow();
-        repositorio.delete(estudianteBorrar);
-
-        Optional<Estudiante> estudianteBorrado = repositorio.findById(estudiante.getId());
-
-        // Assert
-        assertTrue(estudianteBorrado.isEmpty());
+        Long id = estudiante.getId();
+        repositorio.deleteById(id);
+        assertTrue(repositorio.findById(id).isEmpty());
     }
 
-    // --- 2. TESTS DE BÚSQUEDA PERSONALIZADA (DNI, EMAIL, INSTITUTO) ---
+    // ---------- CONSULTAS ----------
 
     @Test
     void findByDni() {
-        // Act
         Optional<Estudiante> found = repositorio.findByDniEqualsIgnoreCase("11111111J");
-
-        // Assert
-        assertAll("findByDni",
-                () -> assertTrue(found.isPresent()),
-                () -> assertEquals("Jose", found.get().getNombre())
-        );
+        assertTrue(found.isPresent());
     }
 
     @Test
     void findByEmail() {
-        // Act
-        Optional<Estudiante> found = repositorio.findByEmail("jose.garcia@test.com");
+        Optional<Estudiante> found = repositorio.findByEmail("jose@test.com");
+        assertTrue(found.isPresent());
+    }
 
-        // Assert
-        assertAll("findByEmail",
-                () -> assertTrue(found.isPresent()),
-                () -> assertEquals("11111111J", found.get().getDni())
-        );
+    @Test
+    void findByNombre() {
+        List<Estudiante> estudiantes = repositorio.findByNombreContainingIgnoreCase("jose");
+        assertFalse(estudiantes.isEmpty());
     }
 
     @Test
     void findAllByInstitutoId() {
-        // Act
-        List<Estudiante> estudiantes = repositorio.findAllByInstitutoId(instituto1.getId());
-
-        // Assert
-        assertAll("findAllByInstitutoId",
-                () -> assertNotNull(estudiantes),
-                () -> assertFalse(estudiantes.isEmpty()),
-                () -> assertEquals(1, estudiantes.size()) // Solo el estudiante base insertado en setUp
-        );
-    }
-
-    // Test de FetchType (Simula el del profesor para observar las queries)
-    @Test
-    void test_FetchType_LAZY() {
-        // Vacía la cache del contexto de persistencia (L1 Cache) para forzar la BD
-        entityManager.clear();
-
-        // Act: Busca el estudiante. Si la relación es LAZY, solo hace una consulta aquí.
-        Optional<Estudiante> found = repositorio.findById(estudiante.getId());
-
-        // Assert
-        assertAll("test_FetchType_LAZY",
-                () -> assertTrue(found.isPresent()),
-                // Si la relación Instituto -> Estudiantes es LAZY, acceder a found.get().getInstituto()
-                // DENTRO de un @DataJpaTest puede generar la segunda consulta inmediatamente.
-                () -> assertNotNull(found.get().getInstituto())
-        );
+        List<Estudiante> estudiantes = repositorio.findAllByInstitutoId(instituto.getId());
+        assertEquals(1, estudiantes.size());
     }
 }

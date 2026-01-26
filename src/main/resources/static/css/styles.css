@@ -1,0 +1,23 @@
+/* Fondo general suave */
+body {
+    background: #f5f7fb;
+}
+
+/* Cards más bonitas */
+.card {
+    overflow: hidden;
+    border-radius: 20px !important;
+}
+
+/* Paginación redonda */
+.page-link {
+    border-radius: 999px !important;
+    margin: 0 3px;
+    font-weight: 600;
+}
+
+/* Badge un pelín más grande */
+.badge {
+    font-size: 0.85rem;
+}
+

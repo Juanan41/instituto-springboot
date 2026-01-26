@@ -1,7 +1,7 @@
 package es.juanito.institutos.config.auth;
 
-import es.juanito.institutos.auth.services.jwt.JwtService; // Adaptado
-import es.juanito.institutos.auth.services.users.AuthUsersService; // Adaptado
+import es.juanito.institutos.rest.auth.services.jwt.JwtService; // Adaptado
+import es.juanito.institutos.rest.auth.services.users.AuthUsersService; // Adaptado
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +34,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final AuthUsersService authUsersService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        // Rutas públicas web
+        if (path.startsWith("/public")) return true;
+
+        // Recursos estáticos típicos
+        if (path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/images")
+                || path.startsWith("/webjars") || path.startsWith("/favicon")) return true;
+
+        // Endpoints que NO deben requerir JWT
+        if (path.startsWith("/auth")) return true;
+
+        // Swagger (por si lo tienes)
+        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs")) return true;
+
+        // Errores
+        if (path.startsWith("/error")) return true;
+
+        return false;
+    }
+
+
+    @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain)
@@ -44,6 +68,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String jwt;
         UserDetails userDetails = null;
         String userName = null;
+
+
 
         // 1. Verificar cabecera: No hay cabecera o no empieza por "Bearer "
         if (!StringUtils.hasText(authHeader) || !StringUtils.startsWithIgnoreCase(authHeader, "Bearer ")) {

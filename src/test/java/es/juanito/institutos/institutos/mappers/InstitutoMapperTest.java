@@ -1,9 +1,10 @@
 package es.juanito.institutos.institutos.mappers;
 
-import es.juanito.institutos.estudiantes.models.Estudiante;
-import es.juanito.institutos.institutos.dto.InstitutoCreateDto;
-import es.juanito.institutos.institutos.dto.InstitutoUpdateDto;
-import es.juanito.institutos.institutos.models.Instituto;
+import es.juanito.institutos.rest.estudiantes.models.Estudiante;
+import es.juanito.institutos.rest.institutos.dto.InstitutoCreateDto;
+import es.juanito.institutos.rest.institutos.dto.InstitutoUpdateDto;
+import es.juanito.institutos.rest.institutos.mappers.InstitutoMapper;
+import es.juanito.institutos.rest.institutos.models.Instituto;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;

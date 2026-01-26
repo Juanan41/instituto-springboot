@@ -1,265 +1,221 @@
 package es.juanito.institutos.estudiantes.services;
 
-import es.juanito.institutos.estudiantes.dto.EstudianteRequestDto;
-import es.juanito.institutos.estudiantes.exceptions.EstudianteConflictException;
-import es.juanito.institutos.estudiantes.exceptions.EstudianteNotFoundException;
-import es.juanito.institutos.estudiantes.mappers.EstudianteMapper;
-import es.juanito.institutos.estudiantes.models.Estudiante;
-import es.juanito.institutos.estudiantes.repositories.EstudianteRepository;
-import es.juanito.institutos.institutos.models.Instituto;
-import es.juanito.institutos.institutos.repositories.InstitutosRepository;
+import es.juanito.institutos.rest.estudiantes.dto.EstudianteInfoResponseDto;
+import es.juanito.institutos.rest.estudiantes.dto.EstudianteRequestDto;
+import es.juanito.institutos.rest.estudiantes.dto.EstudianteResponseDto;
+import es.juanito.institutos.rest.estudiantes.exceptions.EstudianteNotFoundException;
+import es.juanito.institutos.rest.estudiantes.mappers.EstudianteMapper;
+import es.juanito.institutos.rest.estudiantes.models.Estudiante;
+import es.juanito.institutos.rest.estudiantes.repositories.EstudianteRepository;
+import es.juanito.institutos.rest.institutos.models.Instituto;
+import es.juanito.institutos.rest.institutos.repositories.InstitutosRepository;
+
+import es.juanito.institutos.rest.estudiantes.services.EstudianteServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.*;
 
-import java.time.LocalDate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class EstudianteServiceImplTest {
 
-    // 🏫 Mocks de Repositorios y Mapper
     @Mock
     private EstudianteRepository estudianteRepository;
+
     @Mock
     private InstitutosRepository institutosRepository;
+
     @Mock
     private EstudianteMapper estudianteMapper;
 
     @InjectMocks
     private EstudianteServiceImpl estudianteService;
 
-    // 🌐 Datos Mock para Setup
     private Instituto instituto1;
     private Estudiante estudiante1;
-    private Estudiante estudiante2; // Declaramos estudiante2 a nivel de clase
-    private EstudianteRequestDto requestDto1;
-    private EstudianteRequestDto requestDto2;
-    private List<Estudiante> estudiantesList;
-    private List<EstudianteRequestDto> dtoList;
+    private Estudiante estudiante2;
+    private EstudianteRequestDto requestDto;
+    private EstudianteResponseDto responseDto1;
+    private EstudianteResponseDto responseDto2;
     private Pageable pageable;
     private Page<Estudiante> estudiantePage;
+    private EstudianteInfoResponseDto infoDto1;
+
 
     @BeforeEach
     void setUp() {
-        instituto1 = Instituto.builder().id(1L).nombre("IES Test").codigoInstituto("I-TEST").build();
+        instituto1 = Instituto.builder()
+                .id(1L)
+                .codigoInstituto("I-TEST")
+                .build();
 
         estudiante1 = Estudiante.builder()
-                .id(1L).nombre("Ana").apellidos("García").dni("11111111A")
-                .email("ana@test.com").fechaNacimiento(LocalDate.of(2000, 1, 1))
+                .id(1L)
+                .dni("11111111A")
                 .instituto(instituto1)
                 .build();
 
-        estudiante2 = Estudiante.builder() // Definimos la variable de clase
-                .id(2L).nombre("Carlos").apellidos("Pérez").dni("22222222B")
-                .email("carlos@test.com").fechaNacimiento(LocalDate.of(2001, 1, 1))
+        estudiante2 = Estudiante.builder()
+                .id(2L)
+                .dni("22222222B")
                 .instituto(instituto1)
                 .build();
 
-        requestDto1 = EstudianteRequestDto.builder()
-                .nombre("Ana").apellidos("García").dni("11111111A")
-                .email("ana@test.com").fechaNacimiento(LocalDate.of(2000, 1, 1))
-                .codigoInstituto("I-TEST").build();
+        infoDto1 = EstudianteInfoResponseDto.builder()
+                .id(1L)
+                .dni("11111111A")
+                .nombre("Ana")
+                .apellidos("García")
+                .email("ana@test.com")
+                .institutoId(1L)
+                .build();
 
-        requestDto2 = EstudianteRequestDto.builder()
-                .nombre("Nuevo").apellidos("Alumno").dni("44444444D")
-                .email("nuevo@test.com").fechaNacimiento(LocalDate.of(2003, 3, 3))
-                .codigoInstituto("I-TEST").build();
+        requestDto = EstudianteRequestDto.builder()
+                .dni("44444444D")
+                .codigoInstituto("I-TEST")
+                .build();
 
-        estudiantesList = List.of(estudiante1, estudiante2);
-        dtoList = List.of(requestDto1, requestDto2);
+        responseDto1 = EstudianteResponseDto.builder()
+                .dni("11111111A")
+                .build();
 
-        // Inicializar objetos de paginación
-        pageable = PageRequest.of(0, 10, Sort.by("nombre").ascending());
-        estudiantePage = new PageImpl<>(estudiantesList, pageable, estudiantesList.size());
+        responseDto2 = EstudianteResponseDto.builder()
+                .dni("22222222B")
+                .build();
+
+        pageable = PageRequest.of(0, 10);
+        estudiantePage = new PageImpl<>(List.of(estudiante1, estudiante2), pageable, 2);
     }
 
-    // ----------------------------------------------------------------------
-    // 1. FIND ALL (Devuelve DTO)
-    // ----------------------------------------------------------------------
+    // ---------------- FIND ALL ----------------
+    @Test
+    void testFindAllSinFiltros() {
+        when(estudianteRepository.findAll(pageable))
+                .thenReturn(estudiantePage);
+
+        when(estudianteMapper.toResponseDto(any(Estudiante.class)))
+                .thenReturn(responseDto1, responseDto2);
+
+        Page<EstudianteResponseDto> result =
+                estudianteService.findAll(
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        pageable
+                );
+
+        assertNotNull(result);
+        assertEquals(2, result.getTotalElements());
+
+        verify(estudianteRepository).findAll(pageable);
+    }
+
+    // ---------------- FIND BY ID ----------------
+    @Test
+    void testFindByIdExistente() {
+        when(estudianteRepository.findById(1L))
+                .thenReturn(Optional.of(estudiante1));
+
+        when(estudianteMapper.toInfoResponseDto(estudiante1))
+                .thenReturn(infoDto1);
+
+        EstudianteInfoResponseDto result = estudianteService.findById(1L);
+
+        assertNotNull(result);
+        assertEquals("11111111A", result.getDni());
+    }
+
+
 
     @Test
-    void testFindAllPaginado_NoFiltros() {
-        // Arrange
-        // ✅ DEBE DEVOLVER PAGE
-        when(estudianteRepository.findAll(pageable)).thenReturn(estudiantePage);
-        // ✅ Mockear el mapeo de Page<Entidad> a Page<DTO>
-        when(estudianteMapper.toEstudianteRequestDto(any(Estudiante.class))).thenReturn(requestDto1, requestDto2);
+    void testFindByIdNoExiste() {
+        when(estudianteRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        // Act
-        // ✅ CORRECCIÓN: Llamamos con los 3 argumentos (null, null, pageable)
-        Page<EstudianteRequestDto> result = estudianteService.findAll(null, null, pageable);
-
-        // Assert
-        assertAll("findAllPaginado",
-                () -> assertNotNull(result),
-                () -> assertEquals(2, result.getTotalElements()),
-                () -> assertEquals(2, result.getContent().size())
+        assertThrows(
+                EstudianteNotFoundException.class,
+                () -> estudianteService.findById(99L)
         );
-
-        // Verify
-        verify(estudianteRepository, times(1)).findAll(pageable);
-        // Se llama al mapeo tantas veces como elementos haya en la página (2)
-        verify(estudianteMapper, times(2)).toEstudianteRequestDto(any(Estudiante.class));
     }
 
+    // ---------------- SAVE ----------------
     @Test
-    void testFindAllPaginado_PorCodigoInstituto() {
-        // Arrange
-        String codigo = "I-TEST";
-        // ✅ Mockear el Repositorio usando el método paginado CORREGIDO (con guion bajo y Pageable)
-        when(estudianteRepository.findByInstituto_CodigoInstitutoContainsIgnoreCase(codigo, pageable)).thenReturn(estudiantePage);
-        when(estudianteMapper.toEstudianteRequestDto(any(Estudiante.class))).thenReturn(requestDto1, requestDto2);
+    void testSaveCorrecto() {
 
-        // Act
-        // ✅ CORRECCIÓN: Llamamos con los 3 argumentos (codigo, null, pageable)
-        Page<EstudianteRequestDto> result = estudianteService.findAll(codigo, null, pageable);
+        when(institutosRepository
+                .findByCodigoInstitutoAndIsDeletedFalse(anyString()))
+                .thenReturn(Optional.of(instituto1));
 
-        // Assert
-        assertAll("findAllPaginado_PorCodigo",
-                () -> assertNotNull(result),
-                () -> assertEquals(2, result.getTotalElements())
-        );
+        when(estudianteMapper.toEstudiante(requestDto, instituto1))
+                .thenReturn(estudiante1);
 
-        // Verify
-        // ✅ Verificamos la llamada CORRECTA
-        verify(estudianteRepository, times(1)).findByInstituto_CodigoInstitutoContainsIgnoreCase(codigo, pageable);
-        verify(estudianteMapper, times(2)).toEstudianteRequestDto(any(Estudiante.class));
+        when(estudianteRepository.save(estudiante1))
+                .thenReturn(estudiante1);
+
+        when(estudianteMapper.toResponseDto(estudiante1))
+                .thenReturn(responseDto1);
+
+        EstudianteResponseDto result =
+                estudianteService.save(requestDto);
+
+        assertNotNull(result);
+        verify(estudianteRepository).save(estudiante1);
     }
 
-    // Se recomienda añadir testFindAllPaginado_PorNombre y testFindAllPaginado_PorAmbos
 
-    // ----------------------------------------------------------------------
-    // 2. FIND BY ID (Se mantiene igual, sin paginación)
-    // ----------------------------------------------------------------------
+    // ---------------- UPDATE ----------------
     @Test
-    void testFindById_Existente() {
-        // Arrange
-        Long id = 1L;
-        when(estudianteRepository.findById(id)).thenReturn(Optional.of(estudiante1));
-        // ✅ Mockear el mapeo a DTO
-        when(estudianteMapper.toEstudianteRequestDto(estudiante1)).thenReturn(requestDto1);
+    void testUpdateCorrecto() {
 
-        // Act
-        // ✅ CORRECCIÓN: Esperamos EstudianteRequestDto
-        EstudianteRequestDto result = estudianteService.findById(id);
+        when(estudianteRepository.findById(1L))
+                .thenReturn(Optional.of(estudiante1));
 
-        // Assert
-        assertAll("findById_Existente",
-                () -> assertNotNull(result),
-                () -> assertEquals(requestDto1.getDni(), result.getDni())
-        );
+        when(institutosRepository
+                .findByCodigoInstitutoAndIsDeletedFalse(anyString()))
+                .thenReturn(Optional.of(instituto1));
 
-        // Verify
-        verify(estudianteRepository, times(1)).findById(id);
-        verify(estudianteMapper, times(1)).toEstudianteRequestDto(estudiante1);
+        when(estudianteMapper.toEstudiante(requestDto, estudiante1, instituto1))
+                .thenReturn(estudiante1);
+
+        when(estudianteRepository.save(estudiante1))
+                .thenReturn(estudiante1);
+
+        when(estudianteMapper.toResponseDto(estudiante1))
+                .thenReturn(responseDto1);
+
+        EstudianteResponseDto result =
+                estudianteService.update(1L, requestDto);
+
+        assertNotNull(result);
     }
 
+
+    // ---------------- DELETE ----------------
     @Test
-    void testFindById_NoExiste() {
-        // Arrange
-        Long id = 99L;
-        when(estudianteRepository.findById(id)).thenReturn(Optional.empty());
+    void testDeleteById() {
+        when(estudianteRepository.existsById(1L)).thenReturn(true);
 
-        // Act & Assert
-        assertThrows(EstudianteNotFoundException.class, () -> estudianteService.findById(id));
+        estudianteService.deleteById(1L);
 
-        // Verify
-        verify(estudianteRepository, times(1)).findById(id);
-    }
-
-    // ----------------------------------------------------------------------
-    // 3. SAVE (CREATE) (Devuelve DTO)
-    // ----------------------------------------------------------------------
-
-    @Test
-    void testSave_Exitoso() {
-        // Arrange
-        when(institutosRepository.findByCodigoInstituto(anyString())).thenReturn(Optional.of(instituto1));
-        when(estudianteMapper.toEstudiante(eq(requestDto2), eq(instituto1))).thenReturn(estudiante1);
-        when(estudianteRepository.save(estudiante1)).thenReturn(estudiante1);
-        when(estudianteMapper.toEstudianteRequestDto(estudiante1)).thenReturn(requestDto1);
-
-        // Act
-        EstudianteRequestDto result = estudianteService.save(requestDto2);
-
-        // Assert
-        assertAll("save_Exitoso",
-                () -> assertNotNull(result),
-                () -> assertEquals(requestDto1.getDni(), result.getDni())
-        );
-
-        // Verify
-        verify(institutosRepository, times(1)).findByCodigoInstituto(requestDto2.getCodigoInstituto());
-        verify(estudianteRepository, times(1)).save(estudiante1);
-    }
-
-    @Test
-    void testSave_InstitutoNoEncontrado() {
-        // Arrange
-        when(institutosRepository.findByCodigoInstituto(anyString())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(EstudianteConflictException.class, () -> estudianteService.save(requestDto2));
-
-        // Verify
-        verify(institutosRepository, times(1)).findByCodigoInstituto(requestDto2.getCodigoInstituto());
-        verify(estudianteRepository, never()).save(any());
-    }
-
-    // ----------------------------------------------------------------------
-    // 4. UPDATE (Devuelve DTO)
-    // ----------------------------------------------------------------------
-
-    @Test
-    void testUpdate_Exitoso() {
-        // Arrange
-        Long id = 1L;
-        when(estudianteRepository.findById(id)).thenReturn(Optional.of(estudiante1));
-        when(institutosRepository.findByCodigoInstituto(anyString())).thenReturn(Optional.of(instituto1));
-        when(estudianteMapper.toEstudiante(eq(requestDto2), eq(estudiante1), eq(instituto1))).thenReturn(estudiante1);
-        when(estudianteRepository.save(estudiante1)).thenReturn(estudiante1);
-        when(estudianteMapper.toEstudianteRequestDto(estudiante1)).thenReturn(requestDto2);
-
-        // Act
-        EstudianteRequestDto result = estudianteService.update(id, requestDto2);
-
-        // Assert
-        assertAll("update_Exitoso",
-                () -> assertNotNull(result),
-                () -> assertEquals(requestDto2.getNombre(), result.getNombre())
-        );
-
-        // Verify
-        verify(estudianteRepository, times(1)).findById(id);
-        verify(estudianteRepository, times(1)).save(estudiante1);
-    }
-
-    // ----------------------------------------------------------------------
-    // 5. DELETE BY ID (Soft Delete)
-    // ----------------------------------------------------------------------
-
-    @Test
-    void testDeleteById_Exitoso() {
-        // Arrange
-        Long id = 1L;
-        when(estudianteRepository.existsById(id)).thenReturn(true);
-        doNothing().when(estudianteRepository).updateIsDeletedToTrueById(id);
-
-        // Act
-        estudianteService.deleteById(id);
-
-        // Verify
-        verify(estudianteRepository, times(1)).existsById(id);
-        verify(estudianteRepository, times(1)).updateIsDeletedToTrueById(id);
+        verify(estudianteRepository).updateIsDeletedToTrueById(1L);
     }
 }

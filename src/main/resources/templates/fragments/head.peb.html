@@ -1,0 +1,67 @@
+<head>
+    <title>{{ 'app.title' | message }} - {{ appDescription }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+    <!-- Bootstrap 5.3 CSS via WebJars -->
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.css">
+
+    <!-- Flags (banderas) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
+
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/css/styles.css">
+
+    <!-- Estilos del proyecto -->
+    <style>
+        body {
+            background: url(/images/fondo.jpg) no-repeat center center fixed;
+            background-size: cover;
+        }
+        .content-panel {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 22px;
+            margin-top: 20px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+            color: #fff;
+        }
+        .app-header {
+            text-align: center;
+            margin-top: 25px;
+            color: #fff;
+        }
+        .app-header h1 {
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 6px 18px rgba(0,0,0,0.45);
+            margin-bottom: 6px;
+        }
+        .app-header .sub {
+            opacity: 0.95;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+        .star {
+            font-size: 1.6rem;
+            margin-left: 10px;
+        }
+        .table {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .table th {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+

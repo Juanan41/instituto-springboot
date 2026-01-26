@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+{% include "fragments/head" %}
+
+<body class="bg-light">
+{% include "fragments/navbar" %}
+
+<div class="container py-4">
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-success text-white rounded-top-4">
+            <h2 class="h5 mb-0">
+                {% if estudiante is not null and estudiante.id is not null %}
+                ✏️ {{ "student.form.title.edit" | message }}
+                {% else %}
+                ➕ {{ "student.form.title.create" | message }}
+                {% endif %}
+            </h2>
+        </div>
+
+        <div class="card-body p-4">
+
+            {% if institutos is empty %}
+            <div class="alert alert-warning rounded-4">
+                ⚠️ {{ "student.form.noInstitutes" | message }}
+                <div class="small mt-2">
+                    {{ "student.form.createInstituteFirst" | message }}
+                    <a href="/public/institutos/nuevo?lang={{ lang | default('es') }}">
+                        {{ "nav.createInstitute" | message }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post"
+                  action="{% if estudiante is not null and estudiante.id is not null %}/public/estudiantes/editar/{{ estudiante.id }}{% else %}/public/estudiantes/nuevo{% endif %}">
+
+                <input type="hidden" name="lang" value="{{ lang | default('es') }}"/>
+
+                {% if estudiante is not null and estudiante.id is not null %}
+                <input type="hidden" name="id" value="{{ estudiante.id }}"/>
+                {% endif %}
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ "student.field.nombre" | message }}</label>
+                        <input class="form-control"
+                               type="text"
+                               name="nombre"
+                               value="{{ estudiante.nombre | default('') }}"
+                               placeholder="{{ 'student.placeholder.nombre' | message }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">{{ "student.field.apellidos" | message }}</label>
+                        <input class="form-control"
+                               type="text"
+                               name="apellidos"
+                               value="{{ estudiante.apellidos | default('') }}"
+                               placeholder="{{ 'student.placeholder.apellidos' | message }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">{{ "student.field.dni" | message }}</label>
+                        <input class="form-control"
+                               type="text"
+                               name="dni"
+                               value="{{ estudiante.dni | default('') }}"
+                               placeholder="{{ 'student.placeholder.dni' | message }}"
+                               required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ "student.field.email" | message }}</label>
+                        <input class="form-control"
+                               type="email"
+                               name="email"
+                               value="{{ estudiante.email | default('') }}"
+                               placeholder="{{ 'student.placeholder.email' | message }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ "student.field.fechaNacimiento" | message }}</label>
+                        <input class="form-control"
+                               type="date"
+                               name="fechaNacimiento"
+                               value="{{ estudiante.fechaNacimiento | default('') }}">
+                    </div>
+
+                    <!-- ✅ Instituto opcional -->
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">{{ "student.field.instituto" | message }}</label>
+
+                        {% if institutos is empty %}
+                        <input class="form-control" type="text" value="-- Sin instituto --" disabled>
+                        <input type="hidden" name="institutoId" value="">
+                        {% else %}
+                        <select class="form-select" name="institutoId">
+                            <option value="">
+                                {{ "student.select.institute.optional" | message }}
+                            </option>
+
+                            {% for inst in institutos %}
+                            <option value="{{ inst.id }}"
+                                    {% if estudiante.instituto is not null and estudiante.instituto.id == inst.id %}
+                                    selected
+                                    {% endif %}>
+                                {{ inst.nombre }} ({{ inst.ciudad }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <!-- ✅ Guardar SIEMPRE habilitado -->
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i> {{ "btn.save" | message }}
+                    </button>
+
+                    <a href="/public?lang={{ lang | default('es') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> {{ "btn.back" | message }}
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% include "fragments/scripts" %}
+</body>
+</html>

@@ -1,6 +1,6 @@
 package es.juanito.institutos.websockets.notifications.mappers;
 
-import es.juanito.institutos.institutos.models.Instituto;
+import es.juanito.institutos.rest.institutos.models.Instituto;
 import es.juanito.institutos.websockets.notifications.dto.InstitutoNotificationResponse;
 import org.springframework.stereotype.Component;
 

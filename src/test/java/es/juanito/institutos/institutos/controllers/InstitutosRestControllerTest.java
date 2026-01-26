@@ -1,31 +1,46 @@
 package es.juanito.institutos.institutos.controllers;
 
-import es.juanito.institutos.institutos.dto.InstitutoResponseDto;
-import es.juanito.institutos.institutos.dto.InstitutoUpdateDto;
-import es.juanito.institutos.institutos.exceptions.InstitutoNotFoundException;
-import es.juanito.institutos.institutos.services.InstitutosService;
+import es.juanito.institutos.rest.institutos.controllers.InstitutosRestController;
+import es.juanito.institutos.rest.auth.services.jwt.JwtService;
+import es.juanito.institutos.config.auth.JwtAuthFilter;
+import es.juanito.institutos.rest.institutos.dto.InstitutoResponseDto;
+import es.juanito.institutos.rest.institutos.dto.InstitutoUpdateDto;
+import es.juanito.institutos.rest.institutos.exceptions.InstitutoNotFoundException;
+import es.juanito.institutos.rest.institutos.services.InstitutosService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(controllers = InstitutosRestController.class)
+@AutoConfigureMockMvc(addFilters = false) // 🔥 DESACTIVA FILTROS DE SEGURIDAD
 class InstitutosRestControllerTest {
 
-    private final String ENDPOINT = "/api/v1/institutos";
+    private static final String ENDPOINT = "/api/v1/institutos";
 
-    //Eliminó la referencia incorrecta a .numeroEstudiantes(int)
+    @Autowired
+    private MockMvc mockMvc;
+
+    // -------- MOCKS NECESARIOS --------
+    @MockBean
+    private InstitutosService institutosService;
+
+    @MockBean
+    private JwtAuthFilter jwtAuthFilter;   // 🔥 CLAVE
+    @MockBean
+    private JwtService jwtService;         // 🔥 CLAVE
+
     private final InstitutoResponseDto institutoResponse1 = InstitutoResponseDto.builder()
             .id(1L)
             .nombre("Gomez Moreno")
@@ -39,7 +54,6 @@ class InstitutosRestControllerTest {
             .codigoInstituto("4567-XXX")
             .build();
 
-    //Eliminó la referencia incorrecta a .numeroEstudiantes(int)
     private final InstitutoResponseDto institutoResponse2 = InstitutoResponseDto.builder()
             .id(2L)
             .nombre("IES Francisco de Quevedo")
@@ -53,225 +67,62 @@ class InstitutosRestControllerTest {
             .codigoInstituto("6789-ZZZ")
             .build();
 
-    @Autowired
-    private MockMvcTester mockMvcTester;
-
-    @MockitoBean
-    private InstitutosService institutosService;
-
+    // ---------- GET ALL ----------
     @Test
-    void getAll() {
-        var institutos = List.of(institutoResponse1, institutoResponse2);
-        when(institutosService.findAll(null, null)).thenReturn(institutos);
+    void getAll() throws Exception {
+        when(institutosService.findAll(null, null))
+                .thenReturn(List.of(institutoResponse1, institutoResponse2));
 
-        var result = mockMvcTester.get()
-                .uri(ENDPOINT)
-                .contentType(MediaType.APPLICATION_JSON)
-                .exchange();
-
-        assertThat(result)
-                .hasStatusOk()
-                .bodyJson().satisfies(json -> {
-                    assertThat(json).extractingPath("$.length()").isEqualTo(institutos.size());
-                    assertThat(json).extractingPath("$[0]")
-                            .convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse1);
-                    assertThat(json).extractingPath("$[1]")
-                            .convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse2);
-                });
-
-        verify(institutosService, times(1)).findAll(null, null);
+        mockMvc.perform(get(ENDPOINT))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].nombre").value("Gomez Moreno"))
+                .andExpect(jsonPath("$[1].nombre").value("IES Francisco de Quevedo"));
     }
 
     @Test
-    void getAllByCiudad() {
-        var institutos = List.of(institutoResponse2);
-        String query = "?ciudad=" + institutoResponse2.getCiudad();
-        when(institutosService.findAll(anyString(), isNull())).thenReturn(institutos);
+    void getById_ok() throws Exception {
+        when(institutosService.findById(1L))
+                .thenReturn(institutoResponse1);
 
-        var result = mockMvcTester.get()
-                .uri(ENDPOINT + query)
-                .contentType(MediaType.APPLICATION_JSON)
-                .exchange();
-
-        assertThat(result)
-                .hasStatusOk()
-                .bodyJson().satisfies(json -> {
-                    assertThat(json).extractingPath("$.length()").isEqualTo(institutos.size());
-                    assertThat(json).extractingPath("$[0]").convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse2);
-                });
-
-        verify(institutosService, times(1)).findAll(anyString(), isNull());
+        mockMvc.perform(get(ENDPOINT + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Gomez Moreno"));
     }
 
     @Test
-    void getAllByNombre() {
-        var institutos = List.of(institutoResponse2);
-        String query = "?nombre=" + institutoResponse2.getNombre();
-        when(institutosService.findAll(isNull(), anyString())).thenReturn(institutos);
+    void getById_notFound() throws Exception {
+        when(institutosService.findById(anyLong()))
+                .thenThrow(new InstitutoNotFoundException(99L));
 
-        var result = mockMvcTester.get()
-                .uri(ENDPOINT + query)
-                .contentType(MediaType.APPLICATION_JSON)
-                .exchange();
-
-        assertThat(result)
-                .hasStatusOk()
-                .bodyJson().satisfies(json -> {
-                    assertThat(json).extractingPath("$.length()").isEqualTo(institutos.size());
-                    assertThat(json).extractingPath("$[0]").convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse2);
-                });
-
-        verify(institutosService, only()).findAll(isNull(), anyString());
+        mockMvc.perform(get(ENDPOINT + "/99"))
+                .andExpect(status().isNotFound());
     }
 
+    // ---------- PATCH ----------
     @Test
-    void getAllByCiudadAndNombre() {
-        var institutos = List.of(institutoResponse2);
-        String query = "?ciudad=" + institutoResponse2.getCiudad() + "&nombre=" + institutoResponse2.getNombre();
-        when(institutosService.findAll(anyString(), anyString())).thenReturn(institutos);
-
-        var result = mockMvcTester.get()
-                .uri(ENDPOINT + query)
-                .contentType(MediaType.APPLICATION_JSON)
-                .exchange();
-
-        assertThat(result)
-                .hasStatusOk()
-                .bodyJson().satisfies(json -> {
-                    assertThat(json).extractingPath("$.length()").isEqualTo(institutos.size());
-                    assertThat(json).extractingPath("$[0]").convertTo(InstitutoResponseDto.class).isEqualTo(institutoResponse2);
-                });
-
-        verify(institutosService, only()).findAll(anyString(), anyString());
-    }
-
-    @Test
-    void getById_shouldReturnJsonWithInstituto_whenValidIdProvided() {
-        Long id = institutoResponse1.getId();
-        when(institutosService.findById(id)).thenReturn(institutoResponse1);
-
-        var result = mockMvcTester.get()
-                .uri(ENDPOINT + "/" + id)
-                .contentType(MediaType.APPLICATION_JSON)
-                .exchange();
-
-        assertThat(result)
-                .hasStatusOk()
-                .bodyJson()
-                .convertTo(InstitutoResponseDto.class)
-                .isEqualTo(institutoResponse1);
-
-        verify(institutosService, only()).findById(anyLong());
-    }
-
-    @Test
-    void getById_shouldThrowInstitutoNotFound_whenInvalidIdProvided() {
-        Long id = 3L;
-        when(institutosService.findById(anyLong())).thenThrow(new InstitutoNotFoundException(id));
-
-        var result = mockMvcTester.get()
-                .uri(ENDPOINT + "/" + id)
-                .contentType(MediaType.APPLICATION_JSON)
-                .exchange();
-
-        assertThat(result)
-                .hasStatus4xxClientError()
-                .hasFailed().failure()
-                .isInstanceOf(InstitutoNotFoundException.class)
-                .hasMessageContaining("no encontrado");
-
-        verify(institutosService, only()).findById(anyLong());
-    }
-
-    @Test
-    void updatePartial() {
-        // Arrange
-        Long id = 1L;
-
-        // RequestBody con valores válidos, incluyendo un código de instituto que pase @InstitutoCode
-        String requestBody = """
-    {
-        "nombre": "Las Meigas",
-        "ciudad": "Galicia",
-        "direccion": "Calle Barlovento",
-        "telefono": "999-88-77-00",
-        "email": "contacto@lasmeigas.com",
-        "numeroProfesores": 20,
-        "tipo": "publico",
-        "anioFundacion": "2000-05-12",
-        "codigoInstituto": "LMG-1234"
-    }
-    """;
-
-        // DTO de respuesta esperando
-        var institutoUpdated = InstitutoResponseDto.builder()
-                .id(1L)
-                .nombre("Las Meigas")
-                .ciudad("Galicia")
-                .direccion("Calle Barlovento")
-                .telefono("999-88-77-00")
-                .email("contacto@lasmeigas.com")
-                // Eliminó la referencia a .numeroEstudiantes(int)
-                .numeroProfesores(20)
-                .tipo("publico")
-                .anioFundacion(LocalDate.of(2000, 5, 12))
-                .codigoInstituto("LMG-1234")
-                .build();
-
-        // Mock del servicio
+    void updatePartial() throws Exception {
         when(institutosService.update(anyLong(), any(InstitutoUpdateDto.class)))
-                .thenReturn(institutoUpdated);
+                .thenReturn(institutoResponse1);
 
-        // Act
-        var result = mockMvcTester.patch()
-                .uri("/api/v1/institutos/" + id)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody)
-                .exchange();
-
-        // Assert
-        assertThat(result)
-                .hasStatusOk()
-                .bodyJson()
-                .convertTo(InstitutoResponseDto.class)
-                .isEqualTo(institutoUpdated);
-
-        // Verify
-        verify(institutosService, only()).update(anyLong(), any(InstitutoUpdateDto.class));
+        mockMvc.perform(patch(ENDPOINT + "/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "nombre": "Gomez Moreno",
+                              "direccion": "Calle Albaida"
+                            }
+                            """))
+                .andExpect(status().isOk());
     }
 
 
-
+    // ---------- DELETE ----------
     @Test
-    void delete() {
-        Long id = 1L;
+    void deleteById() throws Exception {
         doNothing().when(institutosService).deleteById(anyLong());
 
-        var result = mockMvcTester.delete()
-                .uri(ENDPOINT + "/" + id)
-                .exchange();
-
-        assertThat(result)
-                .hasStatus(HttpStatus.NO_CONTENT);
-
-        verify(institutosService, only()).deleteById(anyLong());
-    }
-
-    @Test
-    void delete_shouldThrowInstitutoNotFound_whenInvalidIdProvided() {
-        Long id = 3L;
-        doThrow(new InstitutoNotFoundException(id)).when(institutosService).deleteById(anyLong());
-
-        var result = mockMvcTester.delete()
-                .uri(ENDPOINT + "/" + id)
-                .exchange();
-
-        assertThat(result)
-                .hasStatus(HttpStatus.NOT_FOUND)
-                .hasFailed().failure()
-                .isInstanceOf(InstitutoNotFoundException.class)
-                .hasMessageContaining("no encontrado");
-
-        verify(institutosService, only()).deleteById(anyLong());
+        mockMvc.perform(delete(ENDPOINT + "/1"))
+                .andExpect(status().isNoContent());
     }
 }

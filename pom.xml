@@ -9,11 +9,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.5</version>
         <relativePath/>
     </parent>
 
-    <groupId>es.Juanito</groupId>
+    <groupId>es.juanito</groupId>
     <artifactId>Instituto</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Instituto</name>
@@ -24,7 +24,31 @@
     </properties>
 
     <dependencies>
-        <!-- Web -->
+
+
+        <!-- Bootstrap WebJar -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>bootstrap</artifactId>
+            <version>5.3.3</version>
+        </dependency>
+
+        <!-- Bootstrap Icons -->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>bootstrap-icons</artifactId>
+            <version>1.11.3</version>
+        </dependency>
+
+        <!-- Para poder usar /webjars/... sin poner /5.3.3/ -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>webjars-locator-core</artifactId>
+        </dependency>
+
+
+
+        <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -43,6 +67,7 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -85,12 +110,28 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Lombok (compatible Java 25) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <version>1.18.34</version>
+            <scope>provided</scope>
         </dependency>
+
+        <!-- Swagger / OpenAPI -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
+        <!-- GraphQL -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-graphql</artifactId>
+        </dependency>
+
+
 
         <!-- Tests -->
         <dependency>
@@ -98,15 +139,19 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Pebble -->
+        <dependency>
+            <groupId>io.pebbletemplates</groupId>
+            <artifactId>pebble-spring-boot-starter</artifactId>
+            <version>3.2.2</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Compiler (SIN MapStruct, SIN versiones raras) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
 
             <!-- Spring Boot -->
             <plugin>
@@ -121,7 +166,9 @@
                     </excludes>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 
 </project>
+
