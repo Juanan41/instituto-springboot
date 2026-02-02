@@ -46,6 +46,15 @@ public class Estudiante implements UserDetails {
     private LocalDate fechaNacimiento;
 
     // =========================
+    // Avatar y género
+    // =========================
+    @Column(length = 255)
+    private String avatar;
+
+    @Column(length = 10)
+    private String genero;
+
+    // =========================
     // Campos de Autenticación
     // =========================
     @Column(name = "USERNAME", nullable = false, length = 100, unique = true)

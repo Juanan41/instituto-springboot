@@ -5,6 +5,8 @@ import es.juanito.institutos.config.auth.repositories.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.Set;
+
 
 @Service
 @RequiredArgsConstructor
@@ -16,28 +18,27 @@ public class AppAuthService {
     /**
      * ✅ Registro persistente (se guarda en BD para siempre)
      */
-    public AppUser register(String username, String email, String rawPassword) {
+    public void register(String username, String email, String password) {
 
-        username = username.trim().toLowerCase();
-        email = email.trim().toLowerCase();
+        Set<String> roles;
 
-        if (repo.existsByUsername(username)) {
-            throw new RuntimeException("El usuario ya existe");
-        }
-        if (repo.existsByEmail(email)) {
-            throw new RuntimeException("El email ya está registrado");
+        if (email.equalsIgnoreCase("email1983@gmail.com")) {
+            roles = Set.of("ADMIN");
+        } else {
+            roles = Set.of("USER");
         }
 
         AppUser user = AppUser.builder()
                 .username(username)
                 .email(email)
-                .password(passwordEncoder.encode(rawPassword))
+                .password(passwordEncoder.encode(password))
+                .roles(roles)
                 .build();
 
-        user.getRoles().add("USER");
+        repo.save(user);
 
-        return repo.save(user);
     }
+
 
     /**
      * ✅ Login: true si usuario/email + password correctos

@@ -3,7 +3,7 @@
 
 {% include "fragments/head" %}
 
-<body class="bg-light">
+<body class="bg-auth">
 {% include "fragments/navbar" %}
 
 <div class="container py-4">
@@ -15,19 +15,25 @@
 
         <div class="card-body p-4">
 
-            {% if msgError %}
-            <div class="alert alert-danger rounded-4">{{ msgError }}</div>
-            {% endif %}
-            {% if msgOk %}
-            <div class="alert alert-success rounded-4">{{ msgOk }}</div>
+            {% if param.error %}
+            <div class="alert alert-danger rounded-4">
+                Usuario o contraseña incorrectos
+            </div>
             {% endif %}
 
-            <form method="post" action="/public/auth/login">
-                <input type="hidden" name="lang" value="{{ lang | default('es') }}">
+            {% if param.logout %}
+            <div class="alert alert-success rounded-4">
+                Has cerrado sesión correctamente
+            </div>
+            {% endif %}
+
+
+            <form method="post" action="/login">
+            <input type="hidden" name="lang" value="{{ lang | default('es') }}">
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Usuario o Email</label>
-                    <input class="form-control" type="text" name="usernameOrEmail" required>
+                    <label class="form-label fw-semibold">Email</label>
+                    <input class="form-control" type="text" name="username" required>
                 </div>
 
                 <div class="mb-3">

@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS ESTUDIANTES (
                                            EMAIL VARCHAR(100) NOT NULL UNIQUE,
 
                                            INSTITUTO_ID BIGINT NOT NULL,
+                                           AVATAR VARCHAR(255),
+                                           GENERO VARCHAR(10),
 
                                            IS_DELETED BOOLEAN DEFAULT FALSE,
                                            UUID UUID NOT NULL UNIQUE,

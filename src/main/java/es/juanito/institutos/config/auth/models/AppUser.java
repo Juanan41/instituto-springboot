@@ -24,6 +24,7 @@ public class AppUser {
     @Column(nullable = false)
     private String password;
 
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "roles")

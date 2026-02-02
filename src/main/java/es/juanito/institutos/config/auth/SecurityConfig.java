@@ -1,6 +1,5 @@
 package es.juanito.institutos.config.auth;
 
-import es.juanito.institutos.rest.auth.services.users.AuthUsersServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,10 +23,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
-public class SecurityConfig {
+public class  SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
-    private final AuthUsersServiceImpl userDetailsService;
+    // private final JwtAuthFilter jwtAuthFilter;
+    private final UserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,78 +34,88 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // ✅ EVITAR REDIRECCIONES A LOGIN
-                .formLogin(AbstractHttpConfigurer::disable)
-                .logout(AbstractHttpConfigurer::disable)
+                // ❌ NO login automático de Spring
+                .formLogin(form -> form
+                        .loginPage("/public/auth/login")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/public", true)
+                        .failureUrl("/public/auth/login?error")
+                        .permitAll()
+                )
+
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/?logout")
+                        .permitAll()
+                )
+
                 .httpBasic(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // ✅ WEB PUBLICA
+                        // LANDING
+                        .requestMatchers("/", "/index").permitAll()
+
+                        // LOGIN / REGISTRO
+                        .requestMatchers("/public/auth/**").permitAll()
+
+                        // RECURSOS
                         .requestMatchers(
-                                "/", "/index",
-
-                                // ✅ auth web (login/registro/logout)
-                                "/public/auth/**",
-
-                                // ✅ zona pública
-                                "/public", "/public/", "/public/**",
-
-                                "/error",
-                                "/favicon.ico",
-                                "/css/**", "/js/**", "/images/**", "/webjars/**"
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/webjars/**",
+                                "/favicon.ico"
                         ).permitAll()
 
-                        // ✅ Swagger
+                        // SWAGGER
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                        // ✅ H2
+                        // H2
                         .requestMatchers("/h2-console/**").permitAll()
 
-                        // ✅ AUTH API
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-
-                        // 🔒 RESTO PRIVADO
+                        // TODO LO DEMÁS PROTEGIDO
                         .anyRequest().authenticated()
                 )
 
-                // ✅ IMPORTANTE: permitir sesión para WEB (login/logout navbar)
+
+                // ✅ SESIONES
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 .authenticationProvider(authenticationProvider())
 
-                // ✅ JWT filter
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // ✅ JWT (stub)
+                // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // ✅ NUNCA LOGIN HTML, DEVOLVER 401/403 en endpoints protegidos
+                // 🔁 Redirigir a login si intenta zona protegida
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN))
+                        .authenticationEntryPoint((req, res, e) ->
+                                res.sendRedirect("/public/auth/login"))
+                        .accessDeniedHandler((req, res, e) ->
+                                res.sendRedirect("/public/auth/login"))
                 );
 
-        // ✅ H2 console
+        // H2 console
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
 
     // =====================================================
-    // ✅ Authentication Provider
+    // AUTH PROVIDER
     // =====================================================
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
     // =====================================================
-    // ✅ Password Encoder
+    // PASSWORD ENCODER
     // =====================================================
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -113,10 +123,12 @@ public class SecurityConfig {
     }
 
     // =====================================================
-    // ✅ Authentication Manager
+    // AUTH MANAGER
     // =====================================================
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config
+    ) throws Exception {
         return config.getAuthenticationManager();
     }
 }

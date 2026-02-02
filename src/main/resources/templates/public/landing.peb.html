@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Institutos</title>
+
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css">
+
+    <style>
+        body{
+            min-height:100vh;
+            background:
+              linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.6)),
+              url("/images/fondoEntrada.jpg") center/cover no-repeat;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            color:white;
+        }
+
+        .card-landing{
+            background:rgba(0,0,0,.75);
+            padding:40px;
+            border-radius:15px;
+            width:380px;
+            text-align:center;
+        }
+
+        .card-landing a{
+            width:100%;
+            margin-top:10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card-landing">
+    <h1>Gestión de Institutos</h1>
+    <p>Plataforma educativa</p>
+
+    <a href="/public/auth/login" class="btn btn-primary">
+        Iniciar sesión
+    </a>
+
+    <a href="/public/auth/register" class="btn btn-success">
+        Registrarse
+    </a>
+</div>
+
+</body>
+</html>

@@ -3,161 +3,173 @@
 
 {% include "fragments/head" %}
 
-<body class="bg-light">
+<body class="bg-estudiante">
 
-{% include "fragments/navbar" %}
+<!-- ================= OVERLAY ================= -->
+<div class="page-overlay">
 
-<div class="container py-4">
+    {% include "fragments/navbar" %}
 
-    <!-- =================================================== -->
-    <!-- ================= CABECERA DETALLE ================= -->
-    <!-- =================================================== -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div class="container py-4">
 
-        <h2 class="h4 mb-0 fw-bold">🎓 {{ "student.detail.title" | message }}</h2>
+        <!-- ================= CABECERA ================= -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 
-        <!-- ✅ BOTONES ACCIONES -->
-        <div class="d-flex flex-wrap gap-2">
+            <h2 class="h4 mb-0 fw-bold">🎓 {{ "student.detail.title" | message }}</h2>
 
-            <!-- Crear estudiante -->
-            <a href="/public/estudiantes/nuevo?lang={{ lang }}" class="btn btn-success">
-                <i class="bi bi-plus-circle me-1"></i> {{ "btn.create" | message }}
-            </a>
+            <img src="{{ estudiante.avatar }}"
+                 class="rounded-circle shadow"
+                 width="120"
+                 height="120">
 
-            <!-- Editar estudiante -->
-            <a href="/public/estudiantes/editar/{{ estudiante.id }}?lang={{ lang }}" class="btn btn-warning">
-                <i class="bi bi-pencil-square me-1"></i> {{ "btn.edit" | message }}
-            </a>
+            <!-- BOTONES -->
+            <div class="d-flex flex-wrap gap-2">
 
-            <!-- Borrar estudiante -->
-            <form method="post"
-                  action="/public/estudiantes/borrar/{{ estudiante.id }}?lang={{ lang }}"
-                  onsubmit="return confirm('{{ 'msg.confirm.delete' | message }}')"
-                  class="d-inline">
-                <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash me-1"></i> {{ "btn.delete" | message }}
-                </button>
-            </form>
+                <a href="/public/estudiantes/nuevo?lang={{ lang }}" class="btn btn-success">
+                    ➕ {{ "btn.create" | message }}
+                </a>
 
-            <!-- Volver -->
-            <a href="/public?lang={{ lang }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> {{ "btn.back" | message }}
-            </a>
+                <a href="/public/estudiantes/editar/{{ estudiante.id }}?lang={{ lang }}"
+                   class="btn btn-warning">
+                    ✏ {{ "btn.edit" | message }}
+                </a>
+
+                <form method="post"
+                      action="/public/estudiantes/borrar/{{ estudiante.id }}?lang={{ lang }}"
+                      onsubmit="return confirm('{{ 'msg.confirm.delete' | message }}')"
+                      class="d-inline">
+
+                    <button class="btn btn-danger">
+                        🗑 {{ "btn.delete" | message }}
+                    </button>
+
+                </form>
+
+                <a href="/public?lang={{ lang }}" class="btn btn-outline-secondary">
+                    ← {{ "btn.back" | message }}
+                </a>
+
+            </div>
 
         </div>
-    </div>
 
+        <!-- ================= CARD ================= -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4">
 
-    <!-- =================================================== -->
-    <!-- =================== CARD DETALLE =================== -->
-    <!-- =================================================== -->
-    <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-body p-4">
+                <div class="row g-3">
 
-            <div class="row g-3">
-
-                <div class="col-md-2">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <div class="text-muted small">{{ "table.id" | message }}</div>
-                        <div class="fw-bold fs-5">{{ estudiante.id }}</div>
+                    <div class="col-md-2">
+                        <div class="p-3 bg-white rounded-4 shadow-sm">
+                            <small>ID</small>
+                            <div class="fw-bold fs-5">{{ estudiante.id }}</div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-md-5">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <div class="text-muted small">{{ "student.field.nombre" | message }}</div>
-                        <div class="fw-semibold fs-5">{{ estudiante.nombre }}</div>
+                    <div class="col-md-5">
+                        <div class="p-3 bg-white rounded-4 shadow-sm">
+                            <small>Nombre</small>
+                            <div class="fw-bold">{{ estudiante.nombre }}</div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-md-5">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <div class="text-muted small">{{ "student.field.apellidos" | message }}</div>
-                        <div class="fw-semibold fs-5">{{ estudiante.apellidos }}</div>
+                    <div class="col-md-5">
+                        <div class="p-3 bg-white rounded-4 shadow-sm">
+                            <small>Apellidos</small>
+                            <div class="fw-bold">{{ estudiante.apellidos }}</div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-md-4">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <div class="text-muted small">{{ "student.field.dni" | message }}</div>
-                        <span class="badge bg-dark rounded-pill px-3 py-2">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-white rounded-4 shadow-sm">
+                            <small>DNI</small>
+                            <span class="badge bg-dark">
                             {{ estudiante.dni }}
                         </span>
-                    </div>
-                </div>
-
-                <div class="col-md-8">
-                    <div class="p-3 bg-white rounded-4 shadow-sm h-100">
-                        <div class="text-muted small">{{ "student.field.email" | message }}</div>
-                        <div class="fw-semibold">
-                            {% if estudiante.email %}
-                            {{ estudiante.email }}
-                            {% else %}
-                            <span class="text-muted">{{ "msg.notSpecified" | message }}</span>
-                            {% endif %}
                         </div>
                     </div>
+
+                    <div class="col-md-8">
+                        <div class="p-3 bg-white rounded-4 shadow-sm">
+                            <small>Email</small>
+
+                            {% if estudiante.email %}
+                            <div>{{ estudiante.email }}</div>
+                            {% else %}
+                            <span class="text-muted">No especificado</span>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
                 </div>
 
-            </div>
+                <!-- ================= INSTITUTO ================= -->
 
+                <hr class="my-4">
 
-            <!-- ✅ Instituto asociado -->
-            <hr class="my-4">
+                <h5>🏫 Instituto asociado</h5>
 
-            <h3 class="h5 mb-3">🏫 {{ "detail.student.institute.title" | message }}</h3>
+                {% if estudiante.instituto != null %}
 
-            {% if estudiante.instituto %}
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
 
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex justify-content-between align-items-center">
 
-                        <div>
-                            <div class="fw-bold fs-5">
-                                {{ estudiante.instituto.nombre }}
-                            </div>
+                            <div>
 
-                            <div class="text-muted">
-                                {{ estudiante.instituto.ciudad }} ·
-                                <span class="badge bg-dark rounded-pill px-3 py-2 ms-2">
+                                <div class="fw-bold fs-5">
+                                    {{ estudiante.instituto.nombre }}
+                                </div>
+
+                                <div class="text-muted">
+                                    {{ estudiante.instituto.ciudad }}
+                                    ·
+                                    <span class="badge bg-dark">
                                     {{ estudiante.instituto.codigoInstituto }}
                                 </span>
+                                </div>
+
+                                <div class="small mt-2">
+                                    📍 {{ estudiante.instituto.direccion }}
+                                </div>
+
+                                <div class="small">
+                                    ✉ {{ estudiante.instituto.email }}
+                                </div>
+
                             </div>
 
-                            <div class="text-muted small mt-2">
-                                📍 {{ estudiante.instituto.direccion }}
+                            <div>
+                                <a class="btn btn-outline-dark"
+                                   href="/public/institutos/{{ estudiante.instituto.id }}?lang={{ lang }}">
+                                    👁 Ver centro
+                                </a>
                             </div>
 
-                            <div class="text-muted small">
-                                ✉️ {{ estudiante.instituto.email }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <a class="btn btn-outline-dark rounded-pill px-4"
-                               href="/public/institutos/{{ estudiante.instituto.id }}?lang={{ lang }}">
-                                <i class="bi bi-eye me-1"></i> {{ "detail.student.institute.btn" | message }}
-                            </a>
                         </div>
 
                     </div>
-
                 </div>
-            </div>
 
-            {% else %}
-            <div class="alert alert-warning rounded-4 mb-0">
-                {{ "detail.student.institute.empty" | message }}
-            </div>
-            {% endif %}
+                {% else %}
 
+                <div class="alert alert-warning">
+                    Este estudiante no tiene instituto asignado
+                </div>
+
+                {% endif %}
+
+            </div>
         </div>
-    </div>
 
-</div>
+    </div> <!-- cierre container -->
+
+</div> <!-- cierre page-overlay -->
 
 {% include "fragments/footer" %}
 {% include "fragments/scripts" %}
+
 </body>
 </html>

@@ -30,6 +30,8 @@ public interface EstudianteRepository extends JpaRepository<Estudiante, Long> {
 
     Optional<Estudiante> findByUsername(String username);
 
+
+
     // ----------------------------------------------------------------------
     // 🔎 METODOS DE BUSQUEDA SIN PAGINACION
     // ----------------------------------------------------------------------
@@ -83,6 +85,15 @@ public interface EstudianteRepository extends JpaRepository<Estudiante, Long> {
 
     @Query("SELECT e FROM Estudiante e WHERE e.instituto.codigoInstituto = :codigoInstituto")
     List<Estudiante> findByInstitutoCodigoInstituto(@Param("codigoInstituto") String codigoInstituto);
+
+    @Query("""
+    SELECT e
+        FROM Estudiante e
+        LEFT JOIN FETCH e.instituto
+        WHERE e.id = :id
+    """)
+    Optional<Estudiante> findByIdWithInstituto(Long id);
+
 
     // ----------------------------------------------------------------------
     // 🗑️ BORRADO LOGICO Y UUID

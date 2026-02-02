@@ -6,6 +6,8 @@ import es.juanito.institutos.rest.institutos.models.Instituto;
 import es.juanito.institutos.rest.institutos.repositories.InstitutosRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +26,12 @@ public class ZonaPublicaController {
     // ===================================================
     // ✅ INDEX (LISTADOS + BUSCADOR + PAGINACIÓN)
     // ===================================================
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping({"", "/", "/index"})
     public String index(
             Model model,
             Locale locale,
+            Authentication auth,
 
             // Institutos
             @RequestParam(defaultValue = "0") int pageInstitutos,
@@ -55,6 +59,13 @@ public class ZonaPublicaController {
 
         Page<Instituto> institutosPage;
         Page<Estudiante> estudiantesPage;
+
+        boolean esAdmin = auth != null &&
+                auth.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+
+        model.addAttribute("esAdmin", esAdmin);
+
 
         // ✅ FILTRO INSTITUTOS
         if (!filtroInstitutos.isBlank()) {
@@ -96,13 +107,14 @@ public class ZonaPublicaController {
     // ===================================================
     // ✅ FORMULARIO CREAR INSTITUTO
     // ===================================================
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/institutos/nuevo")
     public String formNuevoInstituto(Model model, Locale locale) {
         model.addAttribute("lang", locale.getLanguage());
         model.addAttribute("instituto", new Instituto());
         return "formulario/instituto-form";
     }
-
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/institutos/nuevo")
     public String guardarNuevoInstituto(
             @ModelAttribute Instituto instituto,
@@ -126,6 +138,7 @@ public class ZonaPublicaController {
     // ===================================================
     // ✅ EDITAR INSTITUTO
     // ===================================================
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/institutos/editar/{id}")
     public String formEditarInstituto(@PathVariable Long id, Model model, Locale locale, RedirectAttributes ra) {
         model.addAttribute("lang", locale.getLanguage());
@@ -140,7 +153,7 @@ public class ZonaPublicaController {
                     return "redirect:/public?lang=" + locale.getLanguage();
                 });
     }
-
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/institutos/editar/{id}")
     public String guardarEdicionInstituto(
             @PathVariable Long id,
@@ -165,6 +178,7 @@ public class ZonaPublicaController {
     // ===================================================
     // ✅ BORRAR INSTITUTO
     // ===================================================
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/institutos/borrar/{id}")
     public String borrarInstituto(@PathVariable Long id, RedirectAttributes ra,
                                   @RequestParam(defaultValue = "es") String lang) {
@@ -174,8 +188,9 @@ public class ZonaPublicaController {
     }
 
     // ===================================================
-// ✅ FORMULARIO CREAR ESTUDIANTE (INSTITUTO OPCIONAL)
-// ===================================================
+    // ✅ FORMULARIO CREAR ESTUDIANTE (INSTITUTO OPCIONAL)
+    // ===================================================
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping("/estudiantes/nuevo")
     public String formNuevoEstudiante(Model model, Locale locale) {
         model.addAttribute("lang", locale.getLanguage());
@@ -183,7 +198,7 @@ public class ZonaPublicaController {
         model.addAttribute("institutos", institutosRepository.findAll());
         return "formulario/estudiante-form";
     }
-
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @PostMapping("/estudiantes/nuevo")
     public String guardarNuevoEstudiante(
             @ModelAttribute Estudiante estudiante,
@@ -224,9 +239,36 @@ public class ZonaPublicaController {
             estudiante.setPassword("1234");
         }
 
+        // ======================
+// AVATAR AUTOMÁTICO
+// ======================
+        String seed = estudiante.getUsername();
+
+        String genero = estudiante.getGenero();
+
+        String avatarUrl;
+
+        if (genero != null && genero.equalsIgnoreCase("CHICA")) {
+            avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed="
+                    + seed + "&gender=female";
+        } else if (genero != null && genero.equalsIgnoreCase("CHICO")) {
+            avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed="
+                    + seed + "&gender=male";
+        } else {
+            // si no eligió género → aleatorio
+            avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + seed;
+        }
+
+        estudiante.setAvatar(avatarUrl);
+
+
+
         estudianteRepository.save(estudiante);
         ra.addFlashAttribute("msgOk", "✅ Estudiante creado correctamente");
-        return "redirect:/public?lang=" + lang;
+        return "redirect:/public/estudiantes/"
+                + estudiante.getId()
+                + "?lang=" + lang;
+
     }
 
 
@@ -234,8 +276,9 @@ public class ZonaPublicaController {
 
 
     // ===================================================
-// ✅ EDITAR ESTUDIANTE (INSTITUTO OPCIONAL)
-// ===================================================
+    // ✅ EDITAR ESTUDIANTE (INSTITUTO OPCIONAL)
+    // ===================================================
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/estudiantes/editar/{id}")
     public String formEditarEstudiante(@PathVariable Long id, Model model, Locale locale, RedirectAttributes ra) {
         model.addAttribute("lang", locale.getLanguage());
@@ -251,7 +294,7 @@ public class ZonaPublicaController {
                     return "redirect:/public?lang=" + locale.getLanguage();
                 });
     }
-
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/estudiantes/editar/{id}")
     public String guardarEdicionEstudiante(
             @PathVariable Long id,
@@ -286,10 +329,31 @@ public class ZonaPublicaController {
         ra.addFlashAttribute("msgOk", "✅ Estudiante editado correctamente");
         return "redirect:/public/estudiantes/" + id + "?lang=" + lang;
     }
+    // ===================================================
+    // ✅ PERFIL
+    // ===================================================
+
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
+    @GetMapping("/mi-perfil")
+    public String miPerfil(Model model,
+                           org.springframework.security.core.Authentication auth) {
+
+        String username = auth.getName();
+
+        Estudiante estudiante = estudianteRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Estudiante no encontrado"));
+
+        model.addAttribute("estudiante", estudiante);
+
+        return "detalles/estudiante-detalle";
+    }
+
 
     // ===================================================
     // ✅ BORRAR ESTUDIANTE
     // ===================================================
+
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/estudiantes/borrar/{id}")
     public String borrarEstudiante(@PathVariable Long id, RedirectAttributes ra,
                                    @RequestParam(defaultValue = "es") String lang) {
@@ -301,6 +365,7 @@ public class ZonaPublicaController {
     // ===================================================
     // ✅ DETALLES
     // ===================================================
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping("/institutos/{id}")
     public String verDetalleInstituto(@PathVariable Long id, Model model, Locale locale) {
 
@@ -312,7 +377,7 @@ public class ZonaPublicaController {
 
         return "detalles/instituto-detalle";
     }
-
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/estudiantes/{id}")
     public String verDetalleEstudiante(
             @PathVariable Long id,
@@ -322,7 +387,7 @@ public class ZonaPublicaController {
     ) {
         model.addAttribute("lang", locale.getLanguage());
 
-        return estudianteRepository.findById(id)
+        return estudianteRepository.findByIdWithInstituto(id)
                 .map(estudiante -> {
                     model.addAttribute("estudiante", estudiante);
                     return "detalles/estudiante-detalle";

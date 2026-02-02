@@ -1,23 +1,80 @@
-/* Fondo general suave */
+/* ========================= */
+/* BASE */
+/* ========================= */
+
 body {
-    background: #f5f7fb;
+    min-height: 100vh;
+    margin: 0;
 }
 
-/* Cards más bonitas */
+/* ========================= */
+/* OVERLAY */
+/* ========================= */
+
+.page-overlay {
+    background: rgba(255,255,255,0.15);
+    min-height: 100vh;
+}
+
+/* ========================= */
+/* CARDS */
+/* ========================= */
+
 .card {
-    overflow: hidden;
     border-radius: 20px !important;
 }
 
-/* Paginación redonda */
-.page-link {
-    border-radius: 999px !important;
-    margin: 0 3px;
-    font-weight: 600;
-}
+/* ========================= */
+/* BADGES */
+/* ========================= */
 
-/* Badge un pelín más grande */
 .badge {
     font-size: 0.85rem;
 }
 
+/* ========================= */
+/* PAGINACIÓN */
+/* ========================= */
+
+.page-link {
+    border-radius: 999px !important;
+}
+
+/* ========================= */
+/* FONDOS */
+/* ========================= */
+
+.bg-home {
+    background-image: url("/images/home.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.bg-estudiante {
+    background-image: url("/images/estudiante.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.bg-instituto {
+    background-image: url("/images/instituto.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.bg-formulario {
+    background-image: url("/images/formulario.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.bg-auth {
+    background-image: url("/images/fondoEntrada.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}

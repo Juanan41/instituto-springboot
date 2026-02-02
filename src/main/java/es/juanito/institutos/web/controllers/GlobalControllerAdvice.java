@@ -1,43 +1,45 @@
 package es.juanito.institutos.web.controllers;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-import java.time.LocalDate;
+import java.util.Collection;
 
-/**
- * ControllerAdvice para exponer atributos globales a TODAS las vistas (Pebble).
- * Todo lo que pongas aquí se podrá usar directamente en los templates.
- */
 @ControllerAdvice
 public class GlobalControllerAdvice {
 
-    // Lee el nombre de la app desde application.properties:
-    // spring.application.name=Institutos API Rest Spring Boot
-    @Value("${spring.application.name}")
-    private String appName;
+    @ModelAttribute("loggedUser")
+    public String loggedUser() {
 
-    /**
-     * Disponible en todas las vistas como: {{ appName }}
-     */
-    @ModelAttribute("appName")
-    public String getAppName() {
-        return appName;
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth != null &&
+                auth.isAuthenticated() &&
+                !auth.getPrincipal().equals("anonymousUser")) {
+
+            return auth.getName();
+        }
+
+        return null;
     }
 
-    /**
-     * Disponible en todas las vistas como: {{ currentYear }}
-     */
-    @ModelAttribute("currentYear")
-    public int getCurrentYear() {
-        return LocalDate.now().getYear();
-    }
-    @ModelAttribute("appDescription")
-    public String getAppDescription() {
-        return "Gestión de Institutos y Estudiantes";
-    }
+    @ModelAttribute("loggedRoles")
+    public Collection<? extends GrantedAuthority> loggedRoles() {
 
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth != null &&
+                auth.isAuthenticated() &&
+                !auth.getPrincipal().equals("anonymousUser")) {
+
+            return auth.getAuthorities();
+        }
+
+        return null;
+    }
 }
-
-
