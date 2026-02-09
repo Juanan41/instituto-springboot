@@ -8,6 +8,8 @@
 
 <div class="container py-4">
 
+
+
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-header bg-success text-white rounded-top-4">
             <h2 class="h5 mb-0">🔑 Iniciar sesión</h2>
@@ -28,11 +30,11 @@
             {% endif %}
 
 
-            <form method="post" action="/login">
+            <form method="post" action="/public/auth/login">
             <input type="hidden" name="lang" value="{{ lang | default('es') }}">
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Email</label>
+                    <label class="form-label fw-semibold">Usuario o email</label>
                     <input class="form-control" type="text" name="username" required>
                 </div>
 

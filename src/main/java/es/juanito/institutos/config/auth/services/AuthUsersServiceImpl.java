@@ -29,12 +29,16 @@ public class AuthUsersServiceImpl implements UserDetailsService {
                 );
 
         return new User(
-                user.getUsername(),   // 🔐 identidad real
+                user.getUsername(),
                 user.getPassword(),
-                user.getRoles()
-                        .stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList())
+                user.getRoles().stream()
+                        .map(SimpleGrantedAuthority::new) // ROLE_ADMIN
+                        .toList()
         );
     }
 }
+
+
+
+
+

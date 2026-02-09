@@ -1,7 +1,9 @@
 package es.juanito.institutos.config.auth;
 
+import es.juanito.institutos.config.auth.listeners.AuthenticationSuccessListener;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,6 +29,9 @@ public class  SecurityConfig {
 
     // private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+    @Autowired
+    private AuthenticationSuccessListener authenticationSuccessListener;
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,7 +42,7 @@ public class  SecurityConfig {
                 // ❌ NO login automático de Spring
                 .formLogin(form -> form
                         .loginPage("/public/auth/login")
-                        .loginProcessingUrl("/login")
+                        .successHandler(authenticationSuccessListener)
                         .defaultSuccessUrl("/public", true)
                         .failureUrl("/public/auth/login?error")
                         .permitAll()
@@ -68,15 +73,12 @@ public class  SecurityConfig {
                                 "/favicon.ico"
                         ).permitAll()
 
-                        // SWAGGER
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-                        // H2
-                        .requestMatchers("/h2-console/**").permitAll()
-
-                        // TODO LO DEMÁS PROTEGIDO
+                        // TODO LO DEMÁS
                         .anyRequest().authenticated()
                 )
+
+
+
 
 
                 // ✅ SESIONES
@@ -94,8 +96,9 @@ public class  SecurityConfig {
                         .authenticationEntryPoint((req, res, e) ->
                                 res.sendRedirect("/public/auth/login"))
                         .accessDeniedHandler((req, res, e) ->
-                                res.sendRedirect("/public/auth/login"))
+                                res.sendRedirect("/public"))
                 );
+
 
         // H2 console
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Institutos</title>
+    {% import "fragments/macros" as ui %}
 
     <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css">
 
@@ -39,13 +40,10 @@
     <h1>Gestión de Institutos</h1>
     <p>Plataforma educativa</p>
 
-    <a href="/public/auth/login" class="btn btn-primary">
-        Iniciar sesión
-    </a>
+    {{ ui.btn('/public/auth/login', 'Iniciar sesión', 'primary') }}
 
-    <a href="/public/auth/register" class="btn btn-success">
-        Registrarse
-    </a>
+    {{ ui.btn('/public/auth/register', 'Registrarse', 'success') }}
+
 </div>
 
 </body>
