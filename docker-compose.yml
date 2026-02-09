@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-institutos
+    restart: always
+    environment:
+      MYSQL_DATABASE: institutos
+      MYSQL_USER: instituto
+      MYSQL_PASSWORD: instituto
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  app:
+    build: .
+    container_name: instituto-app
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    restart: always
+
+volumes:
+  mysql_data:
