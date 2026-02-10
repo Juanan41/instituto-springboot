@@ -1,11 +1,28 @@
 # Proyecto Instituto – Spring Boot
-ADMIN---
-email1983gmail.com 
-contraseña:1234
+## 🔐 Usuarios de prueba
 
-USER---
-email30gmail.com
-contraseña:1111
+Para acceder a la aplicación se han creado los siguientes usuarios:
+
+### 👑 ADMIN
+- **Email:** email1983gmail.com
+- **Contraseña:** 1234
+
+Permisos:
+- Crear, editar y eliminar institutos
+- Crear, editar y eliminar estudiantes
+- Acceso completo a la aplicación
+
+---
+
+### 👤 USER
+- **Email:** email30gmail.com
+- **Contraseña:** 1111
+
+Permisos:
+- Acceso de lectura
+- Visualización de institutos y estudiantes
+
+---
 
 ## Ejercicio 1: Configuración de Pebble como motor de plantillas
 
