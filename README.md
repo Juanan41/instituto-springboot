@@ -1,4 +1,11 @@
 # Proyecto Instituto – Spring Boot
+ADMIN---
+email1983gmail.com 
+contraseña:1234
+
+USER---
+email30gmail.com
+contraseña:1111
 
 ## Ejercicio 1: Configuración de Pebble como motor de plantillas
 
